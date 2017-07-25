@@ -28,7 +28,7 @@ The main goal is to
   - Controls the project screen in the classroom with infra-red technology
   - Communication protocol is reverse engineered
 
-##Technology
+## Technology
 
 - Common
   - WiFi
