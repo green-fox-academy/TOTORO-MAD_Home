@@ -37,68 +37,71 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
-/** @addtogroup STM32L4xx_HAL_Examples
-  * @{
-  */
-
-/** @addtogroup BSP
-  * @{
-  */
+#include "sensors.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+#define SSID     "A66 Guest"
+#define PASSWORD "Hello123"
+
+#define WIFI_WRITE_TIMEOUT 10000
+#define WIFI_READ_TIMEOUT  10000
+
+#define TERMINAL_USE
+
+#define CONNECTION_TRIAL_MAX          10
 /* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+/* Private variables --------------------------------------------------------*/
+#if defined (TERMINAL_USE)
 extern UART_HandleTypeDef hDiscoUart;
-#ifdef __GNUC__
-/* With GCC/RAISONANCE, small msg_info (option LD Linker->Libraries->Small msg_info
-   set to 'Yes') calls __io_putchar() */
-#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-#define GETCHAR_PROTOTYPE int __io_getchar(void)
-#else
-#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-#define GETCHAR_PROTOTYPE int fgetc(FILE *f)
-#endif /* __GNUC__ */
+#endif /* TERMINAL_USE */
+uint8_t RemoteIP[] = {10,27,99,44};
+char RxData [500];
+char* modulename;
+float TxData[3];
+uint16_t RxLen;
+uint8_t  MAC_Addr[6];
+uint8_t  IP_Addr[4];
+
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
-
+void Error_Handler(void);
+#if defined (TERMINAL_USE)
+#ifdef __GNUC__
+/* With GCC, small printf (option LD Linker->Libraries->Small printf
+   set to 'Yes') calls __io_putchar() */
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif /* __GNUC__ */
+#endif /* TERMINAL_USE */
 /* Private functions ---------------------------------------------------------*/
 
 /**
-  * @brief  Main program
+  * @brief  Main program.
   * @param  None
   * @retval None
   */
 int main(void)
 {
+  int32_t Socket = -1;
+  uint16_t Datalen;
+  uint16_t Trials = CONNECTION_TRIAL_MAX;
 
-  /* STM32L4xx HAL library initialization:
-       - Configure the Flash prefetch, Flash preread and Buffer caches
-       - Systick timer is configured by default as source of time base, but user 
-             can eventually implement his proper time base source (a general purpose 
-             timer for example or other time source), keeping in mind that Time base 
-             duration should be kept 1ms since PPP_TIMEOUT_VALUEs are defined and 
-             handled in milliseconds basis.
-       - Low Level Initialization
-     */
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* Configure the System clock to have a frequency of 80 MHz */
+  /* Configure the system clock */
   SystemClock_Config();
-
-
-  /* Configure the User LED */
-  BSP_LED_Init(LED2); 
-  
-  /* Configure the User Button in GPIO Mode */
-  BSP_PB_Init(BUTTON_USER, BUTTON_MODE_GPIO);
+  /* Configure LED2 */
+  BSP_LED_Init(LED2);
   
   //Initialize sensors
   sensor_inits();
 
+#if defined (TERMINAL_USE)
   /* Initialize all configured peripherals */
-  hDiscoUart.Instance = DISCOVERY_COM1; 
+  hDiscoUart.Instance = DISCOVERY_COM1;
   hDiscoUart.Init.BaudRate = 115200;
   hDiscoUart.Init.WordLength = UART_WORDLENGTH_8B;
   hDiscoUart.Init.StopBits = UART_STOPBITS_1;
@@ -110,19 +113,128 @@ int main(void)
   hDiscoUart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
   BSP_COM_Init(COM1, &hDiscoUart);
-  
-  printf("Press User button to put LED2 ON \n");
-  while(BSP_PB_GetState(BUTTON_USER) == GPIO_PIN_RESET);
-  while(BSP_PB_GetState(BUTTON_USER) == GPIO_PIN_SET);
-  BSP_LED_On(LED2);  
-  
-  /* Infinite loop */
-  while (1)
+
+  printf("****** WIFI Module in TCP Client mode demonstration ****** \n\n");
+  printf("TCP Client Instructions :\n");
+  printf("1- Make sure your Phone is connected to the same network that\n");
+  printf("   you configured using the Configuration Access Point.\n");
+  printf("2- Create a server by using the android application TCP Server\n");
+  printf("   with port(8002).\n");
+  printf("3- Get the Network Name or IP Address of your Android from the step 2.\n\n");
+#endif /* TERMINAL_USE */
+  /*Initialize  WIFI module */
+  if(WIFI_Init() ==  WIFI_STATUS_OK)
   {
-	  HAL_Delay(10000);
-	  printf("%f\n", get_humidity());
+#if defined (TERMINAL_USE)
+	printf("> WIFI Module Initialized.\n");
+#endif /* TERMINAL_USE */
+	if(WIFI_GetMAC_Address(MAC_Addr) == WIFI_STATUS_OK)
+	{
+#if defined (TERMINAL_USE)
+		printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
+			   MAC_Addr[0],
+			   MAC_Addr[1],
+			   MAC_Addr[2],
+			   MAC_Addr[3],
+			   MAC_Addr[4],
+			   MAC_Addr[5]);
+#endif /* TERMINAL_USE */
+	}
+	else
+	{
+#if defined (TERMINAL_USE)
+		printf("> ERROR : CANNOT get MAC address\n");
+#endif /* TERMINAL_USE */
+	  BSP_LED_On(LED2);
+	}
+
+	if( WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK)
+	{
+#if defined (TERMINAL_USE)
+	  printf("> es-wifi module connected \n");
+#endif /* TERMINAL_USE */
+	  if(WIFI_GetIP_Address(IP_Addr) == WIFI_STATUS_OK)
+	  {
+#if defined (TERMINAL_USE)
+printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
+			   IP_Addr[0],
+			   IP_Addr[1],
+			   IP_Addr[2],
+			   IP_Addr[3]);
+
+		printf("> Trying to connect to Server: %d.%d.%d.%d:8002 ...\n",
+			   RemoteIP[0],
+			   RemoteIP[1],
+			   RemoteIP[2],
+			   RemoteIP[3]);
+
+#endif /* TERMINAL_USE */
+		while (Trials--)
+		{
+		  if( WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, 8002, 0) == WIFI_STATUS_OK)
+		  {
+#if defined (TERMINAL_USE)
+			printf("> TCP Connection opened successfully.\n");
+#endif /* TERMINAL_USE */
+			Socket = 0;
+		  }
+		}
+		if(!Trials)
+		{
+#if defined (TERMINAL_USE)
+		  printf("> ERROR : Cannot open Connection\n");
+#endif /* TERMINAL_USE */
+		  BSP_LED_On(LED2);
+		}
+	  }
+	  else
+	  {
+#if defined (TERMINAL_USE)
+		printf("> ERROR : es-wifi module CANNOT get IP address\n");
+#endif /* TERMINAL_USE */
+		BSP_LED_On(LED2);
+	  }
+	}
+	else
+	{
+#if defined (TERMINAL_USE)
+		printf("> ERROR : es-wifi module NOT connected\n");
+#endif /* TERMINAL_USE */
+	  BSP_LED_On(LED2);
+	}
+  }
+  else
+  {
+#if defined (TERMINAL_USE)
+	printf("> ERROR : WIFI Module cannot be initialized.\n");
+#endif /* TERMINAL_USE */
+	BSP_LED_On(LED2);
+  }
+
+  while(1)
+  {
+	if(Socket != -1)
+	{
+		do {
+			TxData[0] = get_temperature();
+			TxData[1] = get_humidity();
+			TxData[2] = get_pressure();
+
+			if(WIFI_SendData(Socket, TxData, sizeof(TxData), &Datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
+			}
+			HAL_Delay(10000);
+		} while (Datalen > 0);
+	}
   }
 }
+
+
+
+/**
+  * @brief  Configure all GPIO's to AN to reduce the power consumption
+  * @param  None
+  * @retval None
+  */
 
 /**
   * @brief  System Clock Configuration
@@ -180,63 +292,22 @@ static void SystemClock_Config(void)
   }
 }
 
+#if defined (TERMINAL_USE)
 /**
-  * @brief  Gets numeric values from the Hyperterminal.
-  * @param  Maximun value allowed (value)
-  * @retval The character received
-  */
-uint32_t Serial_Scanf(uint32_t value)
-{
-  uint16_t tmp = 0;
-  
-  tmp = getchar();
-  
-  if (tmp > value)
-  {
-    printf("\n\r  !!! Please enter valid number between 0 and %lu \n", value);
-    return 0xFF;
-  }
-  return tmp;
-}
-
-/**
-  * @brief Retargets the C library msg_info function to the USART.
-  * @param None
+  * @brief  Retargets the C library printf function to the USART.
+  * @param  None
   * @retval None
   */
 PUTCHAR_PROTOTYPE
 {
   /* Place your implementation of fputc here */
-  /* e.g. write a character to the serial port and Loop until the end of transmission */
-  while (HAL_OK != HAL_UART_Transmit(&hDiscoUart, (uint8_t *) &ch, 1, 30000))
-  {
-    ;
-  }
+  /* e.g. write a character to the USART1 and Loop until the end of transmission */
+  HAL_UART_Transmit(&hDiscoUart, (uint8_t *)&ch, 1, 0xFFFF);
+
   return ch;
 }
+#endif /* TERMINAL_USE */
 
-/**
-  * @brief Retargets the C library scanf function to the USART.
-  * @param None
-  * @retval None
-  */
-GETCHAR_PROTOTYPE
-{
-  /* Place your implementation of fgetc here */
-  /* e.g. readwrite a character to the USART2 and Loop until the end of transmission */
-  uint8_t ch = 0;
-  while (HAL_OK != HAL_UART_Receive(&hDiscoUart, (uint8_t *)&ch, 1, 30000))
-  {
-    ;
-  }
-  return ch;
-}
-
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @param  None
-  * @retval None
-  */
 void Error_Handler(void)
 {  
   /* User can add his own implementation to report the HAL error return state */
@@ -247,10 +318,9 @@ void Error_Handler(void)
 }
 
 #ifdef  USE_FULL_ASSERT
-
 /**
   * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
+  *   where the assert_param error has occurred.
   * @param  file: pointer to the source file name
   * @param  line: assert_param error line source number
   * @retval None
@@ -266,13 +336,5 @@ void assert_failed(uint8_t* file, uint32_t line)
   }
 }
 #endif
-
-/**
-  * @}
-  */ 
-
-/**
-  * @}
-  */ 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
