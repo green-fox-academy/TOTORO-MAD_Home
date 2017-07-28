@@ -43,6 +43,7 @@
 /* Private define ------------------------------------------------------------*/
 #define SSID     "A66 Guest"
 #define PASSWORD "Hello123"
+#define SERVER_PORT 8002
 
 #define WIFI_WRITE_TIMEOUT 10000
 #define WIFI_READ_TIMEOUT  10000
@@ -99,7 +100,7 @@ int main(void)
   //Initialize sensors
   sensor_inits();
 
-#if defined (TERMINAL_USE)
+
   /* Initialize all configured peripherals */
   hDiscoUart.Instance = DISCOVERY_COM1;
   hDiscoUart.Init.BaudRate = 115200;
@@ -118,19 +119,15 @@ int main(void)
   printf("TCP Client Instructions :\n");
   printf("1- Make sure your Phone is connected to the same network that\n");
   printf("   you configured using the Configuration Access Point.\n");
-  printf("2- Create a server by using the android application TCP Server\n");
-  printf("   with port(8002).\n");
+  printf("2- Create a server by using the android application TCP Server with right port.\n");
   printf("3- Get the Network Name or IP Address of your Android from the step 2.\n\n");
-#endif /* TERMINAL_USE */
+
   /*Initialize  WIFI module */
   if(WIFI_Init() ==  WIFI_STATUS_OK)
   {
-#if defined (TERMINAL_USE)
 	printf("> WIFI Module Initialized.\n");
-#endif /* TERMINAL_USE */
 	if(WIFI_GetMAC_Address(MAC_Addr) == WIFI_STATUS_OK)
 	{
-#if defined (TERMINAL_USE)
 		printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
 			   MAC_Addr[0],
 			   MAC_Addr[1],
@@ -138,76 +135,60 @@ int main(void)
 			   MAC_Addr[3],
 			   MAC_Addr[4],
 			   MAC_Addr[5]);
-#endif /* TERMINAL_USE */
 	}
 	else
 	{
-#if defined (TERMINAL_USE)
 		printf("> ERROR : CANNOT get MAC address\n");
-#endif /* TERMINAL_USE */
 	  BSP_LED_On(LED2);
 	}
 
 	if( WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK)
 	{
-#if defined (TERMINAL_USE)
 	  printf("> es-wifi module connected \n");
-#endif /* TERMINAL_USE */
 	  if(WIFI_GetIP_Address(IP_Addr) == WIFI_STATUS_OK)
 	  {
-#if defined (TERMINAL_USE)
 printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
 			   IP_Addr[0],
 			   IP_Addr[1],
 			   IP_Addr[2],
 			   IP_Addr[3]);
 
-		printf("> Trying to connect to Server: %d.%d.%d.%d:8002 ...\n",
+		printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
 			   RemoteIP[0],
 			   RemoteIP[1],
 			   RemoteIP[2],
-			   RemoteIP[3]);
+			   RemoteIP[3],
+			   SERVER_PORT);
 
-#endif /* TERMINAL_USE */
 		while (Trials--)
 		{
-		  if( WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, 8002, 0) == WIFI_STATUS_OK)
+		  if( WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, SERVER_PORT, 0) == WIFI_STATUS_OK)
 		  {
-#if defined (TERMINAL_USE)
 			printf("> TCP Connection opened successfully.\n");
-#endif /* TERMINAL_USE */
 			Socket = 0;
 		  }
 		}
 		if(!Trials)
 		{
-#if defined (TERMINAL_USE)
 		  printf("> ERROR : Cannot open Connection\n");
-#endif /* TERMINAL_USE */
 		  BSP_LED_On(LED2);
 		}
 	  }
 	  else
 	  {
-#if defined (TERMINAL_USE)
 		printf("> ERROR : es-wifi module CANNOT get IP address\n");
-#endif /* TERMINAL_USE */
 		BSP_LED_On(LED2);
 	  }
 	}
 	else
 	{
-#if defined (TERMINAL_USE)
 		printf("> ERROR : es-wifi module NOT connected\n");
-#endif /* TERMINAL_USE */
 	  BSP_LED_On(LED2);
 	}
   }
   else
   {
-#if defined (TERMINAL_USE)
 	printf("> ERROR : WIFI Module cannot be initialized.\n");
-#endif /* TERMINAL_USE */
 	BSP_LED_On(LED2);
   }
 
@@ -221,6 +202,12 @@ printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
 			TxData[2] = get_pressure();
 
 			if(WIFI_SendData(Socket, TxData, sizeof(TxData), &Datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
+				printf("disconnected from server\ntrying to reconnect\n");
+				if( WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, SERVER_PORT, 0) == WIFI_STATUS_OK)
+						  {
+							printf("> TCP Connection opened successfully.\n");
+							Socket = 0;
+						  }
 			}
 			HAL_Delay(10000);
 		} while (Datalen > 0);
