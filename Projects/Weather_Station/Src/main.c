@@ -53,7 +53,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
 extern UART_HandleTypeDef hDiscoUart;
-uint8_t RemoteIP[] = {10, 27, 99, 50};
+uint8_t RemoteIP[] = {10, 27, 99, 145};
 char RxData [500];
 char* modulename;
 float TxData[3];
