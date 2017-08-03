@@ -43,6 +43,7 @@
 #define SSID     "A66 Guest"
 #define PASSWORD "Hello123"
 #define SERVER_PORT 8002
+#define COMMAND_SIZE 24
 
 #define WIFI_WRITE_TIMEOUT 10000
 #define WIFI_READ_TIMEOUT  10000
@@ -58,7 +59,17 @@ float TxData[3];
 uint16_t RxLen;
 uint8_t  MAC_Addr[6];
 uint8_t  IP_Addr[4];
+uint8_t ctrl_up_arr[COMMAND_SIZE] = {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
+									 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0};
 
+uint8_t ctrl_down_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
+									  1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1};
+
+uint8_t ctrl_stop_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
+		   	   	   	   	   	   	   	  1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1};
+
+uint8_t ctrl_verification_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
+		   	   	   	   	   	   	   	  	  	  1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1};
 TIM_HandleTypeDef timh;
 TIM_OC_InitTypeDef occonf;
 GPIO_InitTypeDef GPIO_tim;
@@ -67,8 +78,12 @@ GPIO_InitTypeDef GPIO_tim;
 static void SystemClock_Config(void);
 void Error_Handler(void);
 void timer_init();
+void end_bit();
 void bit_one();
 void bit_zero();
+void ctrl_up();
+void ctrl_down();
+void ctrl_stop();
 #ifdef __GNUC__
 /* With GCC, small printf (option LD Linker->Libraries->Small printf
    set to 'Yes') calls __io_putchar() */
@@ -250,15 +265,19 @@ void timer_init()
 	}*/
 
 	while (1) {
-		bit_one();
-		bit_zero();
-		bit_zero();
-		bit_zero();
-		bit_one();
+		ctrl_up();
 		HAL_Delay(1000);
-
-
+		//ctrl_down();
+		//HAL_Delay(1000);
+		//ctrl_stop();
+		//HAL_Delay(1000);
 	}
+}
+void end_bit()
+{
+	HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
+	HAL_Delay(1);
+	HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
 }
 
 void bit_one()
@@ -277,6 +296,50 @@ void bit_zero()
 	HAL_Delay(1);
 }
 
+void ctrl_up()
+{
+	for (int i = 0; i < COMMAND_SIZE; i++) {
+		if (ctrl_up_arr[i] == 1) {
+			bit_one();
+		} else {
+			bit_zero();
+		}
+	}
+	end_bit();
+	HAL_Delay(34);
+	for (int i = 0; i < COMMAND_SIZE; i++) {
+		if (ctrl_verification_arr[i] == 1) {
+			bit_one();
+		} else {
+			bit_zero();
+		}
+	}
+	end_bit();
+}
+
+void ctrl_down()
+{
+	for (int i = 0; i < COMMAND_SIZE; i++) {
+		if (ctrl_down_arr[i] == 1) {
+			bit_one();
+		} else {
+			bit_zero();
+		}
+	}
+	end_bit();
+}
+
+void ctrl_stop()
+{
+	for (int i = 0; i < COMMAND_SIZE; i++) {
+		if (ctrl_stop_arr[i] == 1) {
+			bit_one();
+		} else {
+			bit_zero();
+		}
+	}
+	end_bit();
+}
 
 /**
   * @brief  Configure all GPIO's to AN to reduce the power consumption
