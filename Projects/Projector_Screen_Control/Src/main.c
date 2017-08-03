@@ -67,6 +67,8 @@ GPIO_InitTypeDef GPIO_tim;
 static void SystemClock_Config(void);
 void Error_Handler(void);
 void timer_init();
+void bit_one();
+void bit_zero();
 #ifdef __GNUC__
 /* With GCC, small printf (option LD Linker->Libraries->Small printf
    set to 'Yes') calls __io_putchar() */
@@ -243,18 +245,39 @@ void timer_init()
 	/* Start channel 1
 	if (HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1) != HAL_OK)
 	{
-		/* PWM Generation Error
+	 	 PWM Generation Error
 		Error_Handler();
 	}*/
 
 	while (1) {
+		bit_one();
+		bit_zero();
+		bit_zero();
+		bit_zero();
+		bit_one();
+		HAL_Delay(1000);
 
-		HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
-		HAL_Delay(900);
-		HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
-		HAL_Delay(100);
+
 	}
 }
+
+void bit_one()
+{
+	HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
+	HAL_Delay(1);
+	HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
+	HAL_Delay(3);
+}
+
+void bit_zero()
+{
+	HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
+	HAL_Delay(3);
+	HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
+	HAL_Delay(1);
+}
+
+
 /**
   * @brief  Configure all GPIO's to AN to reduce the power consumption
   * @param  None
