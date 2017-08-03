@@ -48,7 +48,6 @@
 #include "stm32l475e_iot01_tsensor.h"
 #include "stm32l475e_iot01_psensor.h"
 #include "stm32l475e_iot01_hsensor.h"
-#include "stm32l475e_iot01_qspi.h"
 #include "sensors.h"
 #include "wifi.h"
 
@@ -56,18 +55,6 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-void QSPI_demo(void);
-void QSPI_MemoryMapped_demo(void);
-void Temperature_Test(void);
-void Humidity_Test(void);
-void Pressure_Test(void);
-void Gyro_Test(void);
-void Magneto_Test(void);
-void Accelero_Test(void);
-
-uint32_t Serial_Scanf(uint32_t value);
-void Error_Handler(void);
-
 #endif /* __MAIN_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

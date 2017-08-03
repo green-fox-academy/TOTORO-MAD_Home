@@ -146,11 +146,6 @@
 			<locationURI>PARENT-2-PROJECT_LOC/Src/main.c</locationURI>
 		</link>
 		<link>
-			<name>Example/User/qspi.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/Src/qspi.c</locationURI>
-		</link>
-		<link>
 			<name>Example/User/sensors.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/Src/sensors.c</locationURI>
@@ -181,39 +176,14 @@
 			<locationURI>PARENT-4-PROJECT_LOC/Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01.c</locationURI>
 		</link>
 		<link>
-			<name>Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_accelero.c</name>
-			<type>1</type>
-			<locationURI>PARENT-4-PROJECT_LOC/Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_accelero.c</locationURI>
-		</link>
-		<link>
-			<name>Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_audio.c</name>
-			<type>1</type>
-			<locationURI>PARENT-4-PROJECT_LOC/Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_audio.c</locationURI>
-		</link>
-		<link>
-			<name>Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_gyro.c</name>
-			<type>1</type>
-			<locationURI>PARENT-4-PROJECT_LOC/Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_gyro.c</locationURI>
-		</link>
-		<link>
 			<name>Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_hsensor.c</name>
 			<type>1</type>
 			<locationURI>PARENT-4-PROJECT_LOC/Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_hsensor.c</locationURI>
 		</link>
 		<link>
-			<name>Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_magneto.c</name>
-			<type>1</type>
-			<locationURI>PARENT-4-PROJECT_LOC/Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_magneto.c</locationURI>
-		</link>
-		<link>
 			<name>Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_psensor.c</name>
 			<type>1</type>
 			<locationURI>PARENT-4-PROJECT_LOC/Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_psensor.c</locationURI>
-		</link>
-		<link>
-			<name>Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_qspi.c</name>
-			<type>1</type>
-			<locationURI>PARENT-4-PROJECT_LOC/Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_qspi.c</locationURI>
 		</link>
 		<link>
 			<name>Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_tsensor.c</name>

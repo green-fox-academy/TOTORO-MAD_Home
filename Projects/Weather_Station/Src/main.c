@@ -38,7 +38,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "sensors.h"
-#include "timer.h"
 
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,14 +49,10 @@
 #define WIFI_WRITE_TIMEOUT 10000
 #define WIFI_READ_TIMEOUT  10000
 
-#define TERMINAL_USE
-
 #define CONNECTION_TRIAL_MAX          10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
-#if defined (TERMINAL_USE)
 extern UART_HandleTypeDef hDiscoUart;
-#endif /* TERMINAL_USE */
 uint8_t RemoteIP[] = {10, 27, 99, 50};
 char RxData [500];
 char* modulename;
@@ -65,15 +60,9 @@ float TxData[3];
 uint16_t RxLen;
 uint8_t  MAC_Addr[6];
 uint8_t  IP_Addr[4];
-TIM_HandleTypeDef timh;
-TIM_OC_InitTypeDef occonf;
-GPIO_InitTypeDef GPIO_tim;
-
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 void Error_Handler(void);
-void timer_init();
-#if defined (TERMINAL_USE)
 #ifdef __GNUC__
 /* With GCC, small printf (option LD Linker->Libraries->Small printf
    set to 'Yes') calls __io_putchar() */
@@ -81,7 +70,6 @@ void timer_init();
 #else
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif /* __GNUC__ */
-#endif /* TERMINAL_USE */
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -99,9 +87,10 @@ int main(void) {
 
 	/* Configure the system clock */
 	SystemClock_Config();
+
 	/* Configure LED2 */
 	BSP_LED_Init(LED2);
-	timer_init();
+
 	//Initialize sensors
 	sensor_inits();
 
@@ -212,65 +201,6 @@ int main(void) {
 	}//while
 }//main
 
-void timer_init()
-{
-	/*##-1- Enable peripherals and GPIO Clocks #################################*/
-	/* TIM3 Peripheral clock enable */
-	__HAL_RCC_TIM3_CLK_ENABLE();
-	/* Enable GPIO Channels Clock */
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-
-	/* Configure PA.15 (connected to D9) (TIM3_Channel1)*/
-	GPIO_tim.Mode = GPIO_MODE_AF_PP;
-	GPIO_tim.Pull = GPIO_NOPULL;
-	GPIO_tim.Speed = GPIO_SPEED_FREQ_LOW;
-
-	GPIO_tim.Alternate = GPIO_AF2_TIM3;
-	GPIO_tim.Pin = GPIO_PIN_4;
-	HAL_GPIO_Init(GPIOB, &GPIO_tim);
-
-
-	timh.Instance = TIM3;
-	timh.Init.Prescaler         = 20;
-	timh.Init.Period            = 100;
-	timh.Init.ClockDivision     = 0;
-	timh.Init.CounterMode       = TIM_COUNTERMODE_UP;
-	timh.Init.RepetitionCounter = 0;
-	if (HAL_TIM_PWM_Init(&timh) != HAL_OK)
-	{
-		/* Initialization Error */
-		Error_Handler();
-	}
-
-	occonf.OCFastMode = TIM_OCFAST_DISABLE;
-	occonf.OCIdleState = TIM_OCIDLESTATE_RESET;
-	occonf.OCMode = TIM_OCMODE_PWM1;
-	occonf.OCPolarity = TIM_OCPOLARITY_HIGH;
-	occonf.Pulse = 100;
-
-	/* Set the pulse value for channel 1 */
-	if (HAL_TIM_PWM_ConfigChannel(&timh, &occonf, TIM_CHANNEL_1) != HAL_OK)
-	{
-		/* Configuration Error */
-		Error_Handler();
-	}
-
-	/*##-3- Start PWM signals generation #######################################
-	/* Start channel 1
-	if (HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1) != HAL_OK)
-	{
-		/* PWM Generation Error
-		Error_Handler();
-	}*/
-
-	while (1) {
-
-		HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
-		HAL_Delay(900);
-		HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
-		HAL_Delay(100);
-	}
-}
 /**
   * @brief  Configure all GPIO's to AN to reduce the power consumption
   * @param  None
@@ -333,7 +263,6 @@ static void SystemClock_Config(void)
   }
 }
 
-#if defined (TERMINAL_USE)
 /**
   * @brief  Retargets the C library printf function to the USART.
   * @param  None
@@ -347,7 +276,6 @@ PUTCHAR_PROTOTYPE
 
   return ch;
 }
-#endif /* TERMINAL_USE */
 
 void Error_Handler(void)
 {  

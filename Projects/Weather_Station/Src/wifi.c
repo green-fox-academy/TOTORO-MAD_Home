@@ -391,7 +391,7 @@ WIFI_Status_t WIFI_SendData(uint8_t socket, uint8_t *pdata, uint16_t Reqlen, uin
   * @param  *len :  pointer to length of data
   * @retval Operation status
   */
-WIFI_Status_t WIFI_ReceiveData(uint8_t socket, float *pdata, uint16_t Reqlen, uint16_t *RcvDatalen, uint32_t Timeout)
+WIFI_Status_t WIFI_ReceiveData(uint8_t socket, uint8_t *pdata, uint16_t Reqlen, uint16_t *RcvDatalen, uint32_t Timeout)
 {
   WIFI_Status_t ret = WIFI_STATUS_ERROR; 
 
