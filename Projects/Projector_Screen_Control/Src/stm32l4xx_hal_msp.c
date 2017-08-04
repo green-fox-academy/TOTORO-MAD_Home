@@ -57,24 +57,13 @@
 /** @defgroup HAL_MSP_Private_Functions
   * @{
   */
-
 /**
-  * @brief  Initializes the Global MSP.
-  * @param  None
+  * @brief TIM MSP Initialization
+  *        This function configures the hardware resources used in this example:
+  *           - Peripheral's clock enable
+  * @param htim: TIM handle pointer
   * @retval None
   */
-void HAL_MspInit(void)
-{
-}
-
-/**
-  * @brief  DeInitializes the Global MSP.
-  * @param  None  
-  * @retval None
-  */
-void HAL_MspDeInit(void)
-{
-}
 
 /**
   * @}

@@ -74,10 +74,16 @@ TIM_HandleTypeDef timh;
 TIM_OC_InitTypeDef occonf;
 GPIO_InitTypeDef GPIO_tim;
 
+TIM_HandleTypeDef    TimHandle;
+
+/* Prescaler declaration */
+uint32_t uwPrescalerValue = 0;
+
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 void Error_Handler(void);
-void timer_init();
+void pwm_init();
+void time_base_init();
 void end_bit();
 void bit_one();
 void bit_zero();
@@ -112,7 +118,8 @@ int main(void) {
 	/* Configure LED2 */
 	BSP_LED_Init(LED2);
 
-	timer_init();
+	//pwm_init();
+	time_base_init();
 
 	/* Initialize all configured peripherals */
 	hDiscoUart.Instance = DISCOVERY_COM1;
@@ -213,7 +220,67 @@ int main(void) {
 	}//while
 }//main
 
-void timer_init()
+void time_base_init()
+{
+	/* Compute the prescaler value to have TIMx counter clock equal to 10000 Hz */
+	uwPrescalerValue = (uint32_t)((SystemCoreClock / 2) / 10000) - 1;
+
+	/* Set TIMx instance */
+	TimHandle.Instance = TIMx;
+
+	/* Initialize TIMx peripheral as follows:
+	   + Period = 10000 - 1
+	   + Prescaler = ((SystemCoreClock / 2)/10000) - 1
+	   + ClockDivision = 0
+	   + Counter direction = Up
+	*/
+	TimHandle.Init.Period            = 0x0001;
+	TimHandle.Init.Prescaler         = uwPrescalerValue;
+	TimHandle.Init.ClockDivision     = 0;
+	TimHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;
+	TimHandle.Init.RepetitionCounter = 0;
+	if (HAL_TIM_Base_Init(&TimHandle) != HAL_OK)
+	{
+		/* Initialization Error */
+		Error_Handler();
+	}
+
+	/*##-2- Start the TIM Base generation in interrupt mode ####################*/
+	/* Start Channel1 */
+	if (HAL_TIM_Base_Start_IT(&TimHandle) != HAL_OK)
+	{
+		/* Starting Error */
+		Error_Handler();
+	}
+
+	while (1) {
+	}
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  BSP_LED_Toggle(LED2);
+}
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
+{
+  /*##-1- Enable peripheral clock #################################*/
+  /* TIMx Peripheral clock enable */
+  TIMx_CLK_ENABLE();
+
+  /*##-2- Configure the NVIC for TIMx ########################################*/
+  /* Set the TIMx priority */
+  HAL_NVIC_SetPriority(TIMx_IRQn, 3, 0);
+
+  /* Enable the TIMx global Interrupt */
+  HAL_NVIC_EnableIRQ(TIMx_IRQn);
+}
+void TIMx_IRQHandler(void)
+{
+  HAL_TIM_IRQHandler(&TimHandle);
+}
+
+
+void pwm_init()
 {
 	/*##-1- Enable peripherals and GPIO Clocks #################################*/
 	/* TIM3 Peripheral clock enable */
@@ -257,7 +324,7 @@ void timer_init()
 	}
 
 	/*##-3- Start PWM signals generation #######################################
-	/* Start channel 1
+	Start channel 1
 	if (HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1) != HAL_OK)
 	{
 	 	 PWM Generation Error
