@@ -3,6 +3,13 @@
 
 int main()
 {
-    printf("Hello world!\n");
+    int c;
+    FILE *file;
+    file = fopen("16.csv", "r");
+    if (file) {
+        while ((c = getc(file)) != EOF)
+            putchar(c);
+        fclose(file);
+    }
     return 0;
 }
