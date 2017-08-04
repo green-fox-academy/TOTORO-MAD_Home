@@ -4,3 +4,13 @@
 !*.ld
 !*.s
 
+### CodeBlocks ###
+# specific to CodeBlocks IDE
+*.cbp
+*.layout
+*.depend
+*.csv
+
+# generated directories
+bin/
+obj/
