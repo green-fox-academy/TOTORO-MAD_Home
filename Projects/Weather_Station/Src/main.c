@@ -42,8 +42,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define SSID     "A66 Guest"
-#define PASSWORD "Hello123"
+#define SSID     "bojler elado"
+#define PASSWORD "sportszelet"
 #define SERVER_PORT 8002
 
 #define WIFI_WRITE_TIMEOUT 10000
@@ -53,13 +53,13 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
 extern UART_HandleTypeDef hDiscoUart;
-uint8_t RemoteIP[] = {10, 27, 99, 145};
-char RxData [500];
+uint8_t remote_ip[] = {192, 168, 1, 108};
+char rx_data [500];
 char* modulename;
-float TxData[3];
-uint16_t RxLen;
-uint8_t  MAC_Addr[6];
-uint8_t  IP_Addr[4];
+float tx_data[3];
+uint16_t rx_len;
+uint8_t  mac_addr[6];
+uint8_t  ip_addr[4];
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 void Error_Handler(void);
@@ -78,9 +78,9 @@ void Error_Handler(void);
   * @retval None
   */
 int main(void) {
-	int32_t Socket = -1;
-	uint16_t Datalen;
-	uint16_t Trials = CONNECTION_TRIAL_MAX;
+	int32_t socket = -1;
+	uint16_t datalen;
+	uint16_t trials = CONNECTION_TRIAL_MAX;
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
@@ -110,26 +110,19 @@ int main(void) {
 
 	BSP_COM_Init(COM1, &hDiscoUart);
 
-	printf("****** WIFI Module in TCP Client mode demonstration ****** \n\n");
-	printf("TCP Client Instructions :\n");
-	printf("1- Make sure your Phone is connected to the same network that\n");
-	printf("   you configured using the Configuration Access Point.\n");
-	printf("2- Create a server by using the android application TCP Server with right port.\n");
-	printf("3- Get the Network Name or IP Address of your Android from the step 2.\n\n");
-
 	/*Initialize  WIFI module */
 	if(WIFI_Init() ==  WIFI_STATUS_OK)
 	{
 		printf("> WIFI Module Initialized.\n");
-		if(WIFI_GetMAC_Address(MAC_Addr) == WIFI_STATUS_OK)
+		if(WIFI_Getmac_address(mac_addr) == WIFI_STATUS_OK)
 		{
 			printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
-				   MAC_Addr[0],
-				   MAC_Addr[1],
-				   MAC_Addr[2],
-				   MAC_Addr[3],
-				   MAC_Addr[4],
-				   MAC_Addr[5]);
+				   mac_addr[0],
+				   mac_addr[1],
+				   mac_addr[2],
+				   mac_addr[3],
+				   mac_addr[4],
+				   mac_addr[5]);
 		} else {
 			printf("> ERROR : CANNOT get MAC address\n");
 			BSP_LED_On(LED2);
@@ -137,28 +130,28 @@ int main(void) {
 
 		if (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK) {
 			printf("> es-wifi module connected \n");
-			if (WIFI_GetIP_Address(IP_Addr) == WIFI_STATUS_OK) {
+			if (WIFI_Getip_address(ip_addr) == WIFI_STATUS_OK) {
 				printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
-						IP_Addr[0],
-						IP_Addr[1],
-						IP_Addr[2],
-						IP_Addr[3]);
+						ip_addr[0],
+						ip_addr[1],
+						ip_addr[2],
+						ip_addr[3]);
 
 				printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
-						RemoteIP[0],
-						RemoteIP[1],
-						RemoteIP[2],
-						RemoteIP[3],
+						remote_ip[0],
+						remote_ip[1],
+						remote_ip[2],
+						remote_ip[3],
 						SERVER_PORT);
 
-				while (Trials--) {
-					if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, SERVER_PORT, 0) == WIFI_STATUS_OK) {
+				while (trials--) {
+					if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 0) == WIFI_STATUS_OK) {
 						printf("> TCP Connection opened successfully.\n");
-						Socket = 0;
+						socket = 0;
 					}
 				}
 
-				if (!Trials) {
+				if (!trials) {
 					printf("> ERROR : Cannot open Connection\n");
 					BSP_LED_On(LED2);
 				}
@@ -176,25 +169,23 @@ int main(void) {
 	}
 
 	while (1) {
-		if (Socket != -1) {
+		if (socket != -1) {
 			do {
-				TxData[0] = get_temperature();
-				TxData[1] = get_humidity();
-				TxData[2] = get_pressure();
+				tx_data[0] = get_temperature();
+				tx_data[1] = get_humidity();
+				tx_data[2] = get_pressure();
 
-				printf("temperature: %.2f°C\t humidity: %.2f""%""\t pressure: %.2f\n", TxData[0], TxData[1], TxData[2]);
-
-				if(WIFI_SendData(Socket, TxData, sizeof(TxData), &Datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
-					Socket = -1;
+				if(WIFI_SendData(socket, (uint8_t*)tx_data, sizeof(tx_data), &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
+					socket = -1;
 					printf("disconnected from server\n");
 				}
 				HAL_Delay(10000);
-			} while (Datalen > 0);
+			} while (datalen > 0);
 		} else {
 			printf("trying to reconnect\n");
-			if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, SERVER_PORT, 0) == WIFI_STATUS_OK) {
+			if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 0) == WIFI_STATUS_OK) {
 				printf("> TCP Connection opened successfully.\n");
-				Socket = 0;
+				socket = 0;
 			}
 			HAL_Delay(5000);
 		}//else
