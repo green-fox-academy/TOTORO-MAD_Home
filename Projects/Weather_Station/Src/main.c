@@ -176,8 +176,9 @@ int main(void) {
 				tx_data[2] = get_pressure();
 
 				if(WIFI_SendData(socket, (uint8_t*)tx_data, sizeof(tx_data), &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
-					socket = -1;
 					printf("disconnected from server\n");
+					WIFI_CloseClientConnection(socket);
+					socket = -1;
 				}
 				HAL_Delay(10000);
 			} while (datalen > 0);
