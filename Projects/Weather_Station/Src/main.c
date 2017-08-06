@@ -114,7 +114,7 @@ int main(void) {
 	if(WIFI_Init() ==  WIFI_STATUS_OK)
 	{
 		printf("> WIFI Module Initialized.\n");
-		if(WIFI_Getmac_address(mac_addr) == WIFI_STATUS_OK)
+		if(WIFI_GetMAC_Address(mac_addr) == WIFI_STATUS_OK)
 		{
 			printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
 				   mac_addr[0],
@@ -130,7 +130,7 @@ int main(void) {
 
 		if (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK) {
 			printf("> es-wifi module connected \n");
-			if (WIFI_Getip_address(ip_addr) == WIFI_STATUS_OK) {
+			if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
 				printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
 						ip_addr[0],
 						ip_addr[1],
