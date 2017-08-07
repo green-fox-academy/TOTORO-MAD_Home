@@ -42,8 +42,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define SSID     "bojler elado"
-#define PASSWORD "sportszelet"
+#define SSID     "A66 Guest"
+#define PASSWORD "Hello123"
 #define SERVER_PORT 8002
 
 #define WIFI_WRITE_TIMEOUT 10000
@@ -53,7 +53,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
 extern UART_HandleTypeDef hDiscoUart;
-uint8_t remote_ip[] = {192, 168, 1, 108};
+uint8_t remote_ip[] = {10, 27, 99, 217};
 char rx_data [500];
 char* modulename;
 float tx_data[3];
