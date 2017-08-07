@@ -79,11 +79,14 @@ TIM_HandleTypeDef    TimHandle;
 /* Prescaler declaration */
 uint32_t uwPrescalerValue = 0;
 
+uint8_t irq_cntr = 0;
+
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 void Error_Handler(void);
 void pwm_init();
 void time_base_init();
+void delay(uint64_t Delay);
 void end_bit();
 void bit_one();
 void bit_zero();
@@ -118,8 +121,7 @@ int main(void) {
 	/* Configure LED2 */
 	BSP_LED_Init(LED2);
 
-	//pwm_init();
-	time_base_init();
+
 
 	/* Initialize all configured peripherals */
 	hDiscoUart.Instance = DISCOVERY_COM1;
@@ -135,13 +137,10 @@ int main(void) {
 
 	BSP_COM_Init(COM1, &hDiscoUart);
 
-	printf("****** WIFI Module in TCP Client mode demonstration ****** \n\n");
-	printf("TCP Client Instructions :\n");
-	printf("1- Make sure your Phone is connected to the same network that\n");
-	printf("   you configured using the Configuration Access Point.\n");
-	printf("2- Create a server by using the android application TCP Server with right port.\n");
-	printf("3- Get the Network Name or IP Address of your Android from the step 2.\n\n");
+	//pwm_init();
+	time_base_init();
 
+	pwm_init();
 	/*Initialize  WIFI module */
 	if(WIFI_Init() ==  WIFI_STATUS_OK)
 	{
@@ -223,7 +222,7 @@ int main(void) {
 void time_base_init()
 {
 	/* Compute the prescaler value to have TIMx counter clock equal to 10000 Hz */
-	uwPrescalerValue = (uint32_t)((SystemCoreClock / 2) / 10000) - 1;
+	uwPrescalerValue = (uint32_t)((SystemCoreClock) / 1742) - 1;
 
 	/* Set TIMx instance */
 	TimHandle.Instance = TIMx;
@@ -234,7 +233,7 @@ void time_base_init()
 	   + ClockDivision = 0
 	   + Counter direction = Up
 	*/
-	TimHandle.Init.Period            = 0x0001;
+	TimHandle.Init.Period            = 0xFFFF;
 	TimHandle.Init.Prescaler         = uwPrescalerValue;
 	TimHandle.Init.ClockDivision     = 0;
 	TimHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;
@@ -247,38 +246,19 @@ void time_base_init()
 
 	/*##-2- Start the TIM Base generation in interrupt mode ####################*/
 	/* Start Channel1 */
-	if (HAL_TIM_Base_Start_IT(&TimHandle) != HAL_OK)
+	if (HAL_TIM_Base_Start(&TimHandle) != HAL_OK)
 	{
 		/* Starting Error */
 		Error_Handler();
 	}
-
-	while (1) {
-	}
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  BSP_LED_Toggle(LED2);
-}
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
 {
   /*##-1- Enable peripheral clock #################################*/
   /* TIMx Peripheral clock enable */
   TIMx_CLK_ENABLE();
-
-  /*##-2- Configure the NVIC for TIMx ########################################*/
-  /* Set the TIMx priority */
-  HAL_NVIC_SetPriority(TIMx_IRQn, 3, 0);
-
-  /* Enable the TIMx global Interrupt */
-  HAL_NVIC_EnableIRQ(TIMx_IRQn);
 }
-void TIMx_IRQHandler(void)
-{
-  HAL_TIM_IRQHandler(&TimHandle);
-}
-
 
 void pwm_init()
 {
@@ -323,44 +303,41 @@ void pwm_init()
 		Error_Handler();
 	}
 
-	/*##-3- Start PWM signals generation #######################################
-	Start channel 1
-	if (HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1) != HAL_OK)
-	{
-	 	 PWM Generation Error
-		Error_Handler();
-	}*/
-
 	while (1) {
 		ctrl_up();
-		HAL_Delay(1000);
-		//ctrl_down();
-		//HAL_Delay(1000);
-		//ctrl_stop();
-		//HAL_Delay(1000);
+		delay(2000);
 	}
 }
+
+void delay(uint64_t Delay)
+{
+  uint64_t tickstart = __HAL_TIM_GET_COUNTER(&TimHandle);
+  while ((__HAL_TIM_GET_COUNTER(&TimHandle) - tickstart) < Delay) {
+  }
+
+}
+
 void end_bit()
 {
 	HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
-	HAL_Delay(1);
+	delay(1);
 	HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
 }
 
 void bit_one()
 {
 	HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
-	HAL_Delay(1);
+	delay(1);
 	HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
-	HAL_Delay(3);
+	delay(3);
 }
 
 void bit_zero()
 {
 	HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
-	HAL_Delay(3);
+	delay(3);
 	HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
-	HAL_Delay(1);
+	delay(1);
 }
 
 void ctrl_up()
@@ -373,7 +350,16 @@ void ctrl_up()
 		}
 	}
 	end_bit();
-	HAL_Delay(34);
+	delay(31);
+	for (int i = 0; i < COMMAND_SIZE; i++) {
+		if (ctrl_up_arr[i] == 1) {
+			bit_one();
+		} else {
+			bit_zero();
+		}
+	}
+	end_bit();
+	delay(31);
 	for (int i = 0; i < COMMAND_SIZE; i++) {
 		if (ctrl_verification_arr[i] == 1) {
 			bit_one();
