@@ -20,7 +20,6 @@ TIM_OC_InitTypeDef pwm_conf;
 
 /* TIM_Base variables */
 TIM_HandleTypeDef tim_base_handle;
-uint32_t prescalervalue = 0;	/* Prescaler declaration */
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -33,7 +32,7 @@ uint32_t prescalervalue = 0;	/* Prescaler declaration */
 #endif /* __GNUC__ */
 
 void error_handling(const char *error_string, uint8_t error_code);
-
+void delay(uint16_t delay_value);
 
 void uart_init()
 {
@@ -68,7 +67,7 @@ PUTCHAR_PROTOTYPE
 void time_base_init()
 {
 	/* Compute the prescaler value to have TIM2 counter clock equal to 1742 Hz, period Time 574 micro sec */
-	prescalervalue = (uint32_t)((SystemCoreClock) / 1742) - 1;
+	uint32_t prescalervalue = (uint32_t)((SystemCoreClock) / 50) - 1;
 
 	/* Set TIM2 instance */
 	tim_base_handle.Instance = TIM2;
@@ -100,10 +99,17 @@ void time_base_init()
 	}
 }
 
+void delay(uint16_t delay_value)
+{
+  uint16_t tickstart = __HAL_TIM_GET_COUNTER(&tim_base_handle);
+  while ((__HAL_TIM_GET_COUNTER(&tim_base_handle) - tickstart) < delay_value) {
+  }
+}
+
 void pwm_init()
 {
 	/* Compute the prescaler value to have TIM3 counter clock equal to 40000 Hz */
-	prescalervalue = 20;
+	uint8_t prescalervalue = 20;
 
 	/* Set TIM3 instance */
 	tim_pwm_handle.Instance = TIM3;
@@ -137,12 +143,6 @@ void pwm_init()
 	{
 		/* Configuration Error */
 		error_handling("TIM PWM channel configuration has failed!", HAL_ERROR);
-	}
-
-	while (1) {
-		ctrl_up();
-		delay(2000);
-		//printf("%d\n", __HAL_TIM_GET_COUNTER(&tim_base_handle));
 	}
 }
 

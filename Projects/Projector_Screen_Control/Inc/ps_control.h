@@ -1,17 +1,21 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __INIT_H
-#define __INIT_H
+#ifndef __PS_CONTROL_H
+#define __PS_CONTROL_H
 
 /* Defines -------------------------------------------------------------------*/
 /* Includes ------------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
-void uart_init();
-void time_base_init();
-void pwm_init();
 
-#endif /* __INIT_H */
+/* Exported functions ------------------------------------------------------- */
+void end_bit();
+void bit_one();
+void bit_zero();
+void ctrl_up();
+void ctrl_down();
+void ctrl_stop();
+
+#endif /* __PS_CONTROL_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
