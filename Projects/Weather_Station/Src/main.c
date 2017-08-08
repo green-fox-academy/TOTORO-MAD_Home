@@ -39,9 +39,16 @@
 #include "main.h"
 #include "sensors.h"
 #include "timer.h"
+#include "stm32l4xx_hal_conf.h"
+#include "stm32l4xx_hal.h"
+#include "stm32l4xx_it.h"
+#include "stm32l4xx_hal_rtc.h"
+#include "stm32l4xx_hal_def.h"
 
 
 /* Private typedef -----------------------------------------------------------*/
+
+
 /* Private define ------------------------------------------------------------*/
 #define SSID     "A66 Guest"
 #define PASSWORD "Hello123"
@@ -55,6 +62,7 @@
 #define CONNECTION_TRIAL_MAX          10
 
 #define NTP_TIMESTAMP_DELTA 2208988800ull
+
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
@@ -83,12 +91,21 @@ void Error_Handler(void);
 #endif /* TERMINAL_USE */
 /* Private functions ---------------------------------------------------------*/
 
+
+RTC_HandleTypeDef RtcHandle;
+
+/* Buffers used for displaying Time and Date */
+uint8_t aShowTime[50] = {0}, aShowTimeStamp[50] = {0};
+uint8_t aShowDate[50] = {0}, aShowDateStamp[50] = {0};
+
+
 /**
   * @brief  Main program.
   * @param  None
   * @retval None
   */
-int main(void) {
+int main(void)
+{
 	int32_t Socket = -1;
 	uint16_t Datalen;
 	uint16_t Trials = CONNECTION_TRIAL_MAX;
@@ -103,6 +120,42 @@ int main(void) {
 	timer_init();
 	//Initialize sensors
 	sensor_inits();
+
+/*##-1- Configure the RTC peripheral #######################################*/
+  /* Configure RTC prescaler and RTC data registers */
+  /* RTC configured as follow:
+	  - Hour Format    = Format 12
+	  - Asynch Prediv  = Value according to source clock
+	  - Synch Prediv   = Value according to source clock
+	  - OutPut         = Output Disable
+	  - OutPutPolarity = High Polarity
+	  - OutPutType     = Open Drain */
+
+	HAL_RTC_STATE_RESET(&RtcHandle);
+	RtcHandle.Instance = RTC;
+	RtcHandle.Init.HourFormat = RTC_HOURFORMAT_12;
+	//RtcHandle.Init.AsynchPrediv = ;
+	//RtcHandle.Init.SynchPrediv = ;
+	RtcHandle.Init.OutPut = RTC_OUTPUT_DISABLE;
+	RtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+	RtcHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+	RtcHandle.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
+
+	 if(HAL_RTC_Init(&RtcHandle) != HAL_OK)
+	  {
+		/* Initialization Error */
+		Error_Handler();
+	  }
+
+	  /*##-2-  Configure RTC Timestamp ############################################*/
+	  RTC_TimeStampConfig();
+
+	  /* Infinite loop */
+	  while (1)
+	  {
+		/*##-3- Display the updated Time and Date ################################*/
+		RTC_CalendarShow();
+	  }
 
 
 
@@ -119,6 +172,8 @@ int main(void) {
 	hDiscoUart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
 	BSP_COM_Init(COM1, &hDiscoUart);
+
+
 
 	/*Initialize  WIFI module */
 	if(WIFI_Init() ==  WIFI_STATUS_OK)
