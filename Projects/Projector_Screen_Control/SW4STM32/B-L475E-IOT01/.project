@@ -146,6 +146,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/syscalls.c</locationURI>
 		</link>
 		<link>
+			<name>Example/User/init.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Src/init.c</locationURI>
+		</link>
+		<link>
 			<name>Example/User/main.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/Src/main.c</locationURI>
