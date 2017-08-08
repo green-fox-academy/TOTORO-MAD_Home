@@ -53,6 +53,9 @@
 #define TERMINAL_USE
 
 #define CONNECTION_TRIAL_MAX          10
+
+#define NTP_TIMESTAMP_DELTA 2208988800ull
+
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
 #if defined (TERMINAL_USE)
@@ -65,14 +68,10 @@ float TxData[3];
 uint16_t RxLen;
 uint8_t  MAC_Addr[6];
 uint8_t  IP_Addr[4];
-TIM_HandleTypeDef timh;
-TIM_OC_InitTypeDef occonf;
-GPIO_InitTypeDef GPIO_tim;
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 void Error_Handler(void);
-void timer_init();
 #if defined (TERMINAL_USE)
 #ifdef __GNUC__
 /* With GCC, small printf (option LD Linker->Libraries->Small printf
@@ -120,13 +119,6 @@ int main(void) {
 	hDiscoUart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
 	BSP_COM_Init(COM1, &hDiscoUart);
-
-	printf("****** WIFI Module in TCP Client mode demonstration ****** \n\n");
-	printf("TCP Client Instructions :\n");
-	printf("1- Make sure your Phone is connected to the same network that\n");
-	printf("   you configured using the Configuration Access Point.\n");
-	printf("2- Create a server by using the android application TCP Server with right port.\n");
-	printf("3- Get the Network Name or IP Address of your Android from the step 2.\n\n");
 
 	/*Initialize  WIFI module */
 	if(WIFI_Init() ==  WIFI_STATUS_OK)
@@ -212,65 +204,6 @@ int main(void) {
 	}//while
 }//main
 
-void timer_init()
-{
-	/*##-1- Enable peripherals and GPIO Clocks #################################*/
-	/* TIM3 Peripheral clock enable */
-	__HAL_RCC_TIM3_CLK_ENABLE();
-	/* Enable GPIO Channels Clock */
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-
-	/* Configure PA.15 (connected to D9) (TIM3_Channel1)*/
-	GPIO_tim.Mode = GPIO_MODE_AF_PP;
-	GPIO_tim.Pull = GPIO_NOPULL;
-	GPIO_tim.Speed = GPIO_SPEED_FREQ_LOW;
-
-	GPIO_tim.Alternate = GPIO_AF2_TIM3;
-	GPIO_tim.Pin = GPIO_PIN_4;
-	HAL_GPIO_Init(GPIOB, &GPIO_tim);
-
-
-	timh.Instance = TIM3;
-	timh.Init.Prescaler         = 20;
-	timh.Init.Period            = 100;
-	timh.Init.ClockDivision     = 0;
-	timh.Init.CounterMode       = TIM_COUNTERMODE_UP;
-	timh.Init.RepetitionCounter = 0;
-	if (HAL_TIM_PWM_Init(&timh) != HAL_OK)
-	{
-		/* Initialization Error */
-		Error_Handler();
-	}
-
-	occonf.OCFastMode = TIM_OCFAST_DISABLE;
-	occonf.OCIdleState = TIM_OCIDLESTATE_RESET;
-	occonf.OCMode = TIM_OCMODE_PWM1;
-	occonf.OCPolarity = TIM_OCPOLARITY_HIGH;
-	occonf.Pulse = 100;
-
-	/* Set the pulse value for channel 1 */
-	if (HAL_TIM_PWM_ConfigChannel(&timh, &occonf, TIM_CHANNEL_1) != HAL_OK)
-	{
-		/* Configuration Error */
-		Error_Handler();
-	}
-
-	/*##-3- Start PWM signals generation #######################################
-	/* Start channel 1
-	if (HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1) != HAL_OK)
-	{
-		/* PWM Generation Error
-		Error_Handler();
-	}*/
-
-	while (1) {
-
-		HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
-		HAL_Delay(900);
-		HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
-		HAL_Delay(100);
-	}
-}
 /**
   * @brief  Configure all GPIO's to AN to reduce the power consumption
   * @param  None
@@ -296,6 +229,61 @@ void timer_init()
   * @param  None
   * @retval None
   */
+
+void ntp_client(int argc, char* argv[ ])
+{
+	int sockfd;
+	int n;             // Socket file descriptor and the n return result from sending/receiving from the socket.
+	int port_number = 123;  // NTP UDP port number.
+
+	char* host_name = "europe.pool.ntp.org"; // NTP server host-name
+
+	 // Structure that defines the 48 byte NTP packet protocol.
+	typedef struct
+	{
+	  unsigned li   : 2;          // Only two bits. Leap indicator.
+	  unsigned vn   : 3;          // Only three bits. Version number of the protocol.
+	  unsigned mode : 3;          // Only three bits. Mode. Client will pick mode 3 for client.
+
+	  uint8_t stratum;           // Eight bits. Stratum level of the local clock.
+	  uint8_t poll;              // Eight bits. Maximum interval between successive messages.
+	  uint8_t precision;         // Eight bits. Precision of the local clock.
+
+	  uint32_t rootDelay;        // 32 bits. Total round trip delay time.
+	  uint32_t rootDispersion;   // 32 bits. Max error aloud from primary clock source.
+	  uint32_t refId;            // 32 bits. Reference clock identifier.
+
+	  uint32_t refTm_s;          // 32 bits. Reference time-stamp seconds.
+	  uint32_t refTm_f;          // 32 bits. Reference time-stamp fraction of a second.
+
+	  uint32_t origTm_s;         // 32 bits. Originate time-stamp seconds.
+	  uint32_t origTm_f;         // 32 bits. Originate time-stamp fraction of a second.
+
+	  uint32_t rxTm_s;           // 32 bits. Received time-stamp seconds.
+	  uint32_t rxTm_f;           // 32 bits. Received time-stamp fraction of a second.
+
+	  uint32_t txTm_s;           // 32 bits and the most important field the client cares about. Transmit time-stamp seconds.
+	  uint32_t txTm_f;           // 32 bits. Transmit time-stamp fraction of a second.
+
+
+	}ntp_packet;                         // Total: 384 bits or 48 bytes.
+
+	//create packet
+	ntp_packet packet = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+	memset(&packet, 0, sizeof(ntp_packet));
+
+	// Set the first byte's bits to 00,011,011 for li = 0,vn = 3,and mode = 3. The rest will be left set to zero.
+	*((char*)&packet + 0) = 0x1b; // Represents 27 in base 10 or 00011011 in base 2.
+
+	// Create a UDP socket, convert the host-name to an IP address, set the port number,
+	// connect to the server,send the packet,and then read in the return packet.
+	struct sockaddr_in serv_addr;  // Server address data structure.
+	struct hostent* server;   // Server data structure.
+
+
+}
+
 static void SystemClock_Config(void)
 {
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
