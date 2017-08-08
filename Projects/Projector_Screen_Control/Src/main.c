@@ -51,14 +51,12 @@
 #define CONNECTION_TRIAL_MAX          10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
-extern UART_HandleTypeDef hDiscoUart;
-uint8_t RemoteIP[] = {10, 27, 99, 50};
-uint8_t RxData [500];
-char* modulename;
-float TxData[3];
-uint16_t RxLen;
-uint8_t  MAC_Addr[6];
-uint8_t  IP_Addr[4];
+uint8_t remote_ip[] = {10, 27, 99, 50};
+uint8_t rx_data [500];
+float tx_data[3];
+uint16_t rx_Len;
+uint8_t  mac_addr[6];
+uint8_t  ip_addr[4];
 uint8_t ctrl_up_arr[COMMAND_SIZE] = {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 									 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0};
 
@@ -70,11 +68,11 @@ uint8_t ctrl_stop_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 
 uint8_t ctrl_verification_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 		   	   	   	   	   	   	   	  	  	  1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1};
-TIM_HandleTypeDef timh;
-TIM_OC_InitTypeDef occonf;
-GPIO_InitTypeDef GPIO_tim;
+TIM_HandleTypeDef tim_pwm_handle;
+TIM_OC_InitTypeDef pwm_conf;
+GPIO_InitTypeDef gpio_tim;
 
-TIM_HandleTypeDef    TimHandle;
+TIM_HandleTypeDef tim_base_handle;
 
 /* Prescaler declaration */
 uint32_t uwPrescalerValue = 0;
@@ -93,13 +91,7 @@ void bit_zero();
 void ctrl_up();
 void ctrl_down();
 void ctrl_stop();
-#ifdef __GNUC__
-/* With GCC, small printf (option LD Linker->Libraries->Small printf
-   set to 'Yes') calls __io_putchar() */
-#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-#else
-#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-#endif /* __GNUC__ */
+
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -108,9 +100,9 @@ void ctrl_stop();
   * @retval None
   */
 int main(void) {
-	int32_t Socket = -1;
-	uint16_t Datalen;
-	uint16_t Trials = CONNECTION_TRIAL_MAX;
+	int32_t socket = -1;
+	uint16_t datalen;
+	uint16_t trials = CONNECTION_TRIAL_MAX;
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
@@ -121,103 +113,90 @@ int main(void) {
 	/* Configure LED2 */
 	BSP_LED_Init(LED2);
 
-
-
-	/* Initialize all configured peripherals */
-	hDiscoUart.Instance = DISCOVERY_COM1;
-	hDiscoUart.Init.BaudRate = 115200;
-	hDiscoUart.Init.WordLength = UART_WORDLENGTH_8B;
-	hDiscoUart.Init.StopBits = UART_STOPBITS_1;
-	hDiscoUart.Init.Parity = UART_PARITY_NONE;
-	hDiscoUart.Init.Mode = UART_MODE_TX_RX;
-	hDiscoUart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	hDiscoUart.Init.OverSampling = UART_OVERSAMPLING_16;
-	hDiscoUart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-	hDiscoUart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-
-	BSP_COM_Init(COM1, &hDiscoUart);
+	uart_init();
 
 	//pwm_init();
 	time_base_init();
 
 	pwm_init();
 	/*Initialize  WIFI module */
-	if(WIFI_Init() ==  WIFI_STATUS_OK)
-	{
-		printf("> WIFI Module Initialized.\n");
-		if(WIFI_GetMAC_Address(MAC_Addr) == WIFI_STATUS_OK)
+		if(WIFI_Init() ==  WIFI_STATUS_OK)
 		{
-			printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
-				   MAC_Addr[0],
-				   MAC_Addr[1],
-				   MAC_Addr[2],
-				   MAC_Addr[3],
-				   MAC_Addr[4],
-				   MAC_Addr[5]);
-		} else {
-			printf("> ERROR : CANNOT get MAC address\n");
-			BSP_LED_On(LED2);
-		}
+			printf("> WIFI Module Initialized.\n");
+			if(WIFI_GetMAC_Address(mac_addr) == WIFI_STATUS_OK)
+			{
+				printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
+					   mac_addr[0],
+					   mac_addr[1],
+					   mac_addr[2],
+					   mac_addr[3],
+					   mac_addr[4],
+					   mac_addr[5]);
+			} else {
+				printf("> ERROR : CANNOT get MAC address\n");
+				BSP_LED_On(LED2);
+			}
 
-		if (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK) {
-			printf("> es-wifi module connected \n");
-			if (WIFI_GetIP_Address(IP_Addr) == WIFI_STATUS_OK) {
-				printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
-						IP_Addr[0],
-						IP_Addr[1],
-						IP_Addr[2],
-						IP_Addr[3]);
+			if (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK) {
+				printf("> es-wifi module connected \n");
+				if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
+					printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
+							ip_addr[0],
+							ip_addr[1],
+							ip_addr[2],
+							ip_addr[3]);
 
-				printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
-						RemoteIP[0],
-						RemoteIP[1],
-						RemoteIP[2],
-						RemoteIP[3],
-						SERVER_PORT);
+					printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
+							remote_ip[0],
+							remote_ip[1],
+							remote_ip[2],
+							remote_ip[3],
+							SERVER_PORT);
 
-				while (Trials--) {
-					if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, SERVER_PORT, 0) == WIFI_STATUS_OK) {
-						printf("> TCP Connection opened successfully.\n");
-						Socket = 0;
+					while (trials--) {
+						if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 0) == WIFI_STATUS_OK) {
+							printf("> TCP Connection opened successfully.\n");
+							socket = 0;
+						}
 					}
-				}
 
-				if (!Trials) {
-					printf("> ERROR : Cannot open Connection\n");
+					if (!trials) {
+						printf("> ERROR : Cannot open Connection\n");
+						BSP_LED_On(LED2);
+					}
+				} else {
+					printf("> ERROR : es-wifi module CANNOT get IP address\n");
 					BSP_LED_On(LED2);
 				}
 			} else {
-				printf("> ERROR : es-wifi module CANNOT get IP address\n");
+				printf("> ERROR : es-wifi module NOT connected\n");
 				BSP_LED_On(LED2);
 			}
 		} else {
-			printf("> ERROR : es-wifi module NOT connected\n");
+			printf("> ERROR : WIFI Module cannot be initialized.\n");
 			BSP_LED_On(LED2);
 		}
-	} else {
-		printf("> ERROR : WIFI Module cannot be initialized.\n");
-		BSP_LED_On(LED2);
-	}
 
-	while (1) {
-		if (Socket != -1) {
-			do {
-				if(WIFI_ReceiveData(Socket, RxData, sizeof(RxData), &Datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
-					Socket = -1;
-					printf("disconnected from server\n");
+		while (1) {
+			if (socket != -1) {
+				do {
+					if(WIFI_SendData(socket, (uint8_t*)tx_data, sizeof(tx_data), &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
+						printf("disconnected from server\n");
+						WIFI_CloseClientConnection(socket);
+						socket = -1;
+					}
+					HAL_Delay(10000);
+				} while (datalen > 0);
+			} else {
+				printf("trying to reconnect\n");
+				if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 0) == WIFI_STATUS_OK) {
+					printf("> TCP Connection opened successfully.\n");
+					socket = 0;
 				}
-				HAL_Delay(10000);
-			} while (Datalen > 0);
-		} else {
-			printf("trying to reconnect\n");
-			if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, SERVER_PORT, 0) == WIFI_STATUS_OK) {
-				printf("> TCP Connection opened successfully.\n");
-				Socket = 0;
-			}
-			HAL_Delay(5000);
-		}//else
-	}//while
-}//main
+				HAL_Delay(5000);
+			}//else
+		}//while
+	}//main
 
 void time_base_init()
 {
@@ -225,7 +204,7 @@ void time_base_init()
 	uwPrescalerValue = (uint32_t)((SystemCoreClock) / 1742) - 1;
 
 	/* Set TIMx instance */
-	TimHandle.Instance = TIMx;
+	tim_base_handle.Instance = TIMx;
 
 	/* Initialize TIMx peripheral as follows:
 	   + Period = 10000 - 1
@@ -233,12 +212,12 @@ void time_base_init()
 	   + ClockDivision = 0
 	   + Counter direction = Up
 	*/
-	TimHandle.Init.Period            = 0xFFFF;
-	TimHandle.Init.Prescaler         = uwPrescalerValue;
-	TimHandle.Init.ClockDivision     = 0;
-	TimHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;
-	TimHandle.Init.RepetitionCounter = 0;
-	if (HAL_TIM_Base_Init(&TimHandle) != HAL_OK)
+	tim_base_handle.Init.Period            = 0xFFFF;
+	tim_base_handle.Init.Prescaler         = uwPrescalerValue;
+	tim_base_handle.Init.ClockDivision     = 0;
+	tim_base_handle.Init.CounterMode       = TIM_COUNTERMODE_UP;
+	tim_base_handle.Init.RepetitionCounter = 0;
+	if (HAL_TIM_Base_Init(&tim_base_handle) != HAL_OK)
 	{
 		/* Initialization Error */
 		Error_Handler();
@@ -246,7 +225,7 @@ void time_base_init()
 
 	/*##-2- Start the TIM Base generation in interrupt mode ####################*/
 	/* Start Channel1 */
-	if (HAL_TIM_Base_Start(&TimHandle) != HAL_OK)
+	if (HAL_TIM_Base_Start(&tim_base_handle) != HAL_OK)
 	{
 		/* Starting Error */
 		Error_Handler();
@@ -269,35 +248,35 @@ void pwm_init()
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 
 	/* Configure PA.15 (connected to D9) (TIM3_Channel1)*/
-	GPIO_tim.Mode = GPIO_MODE_AF_PP;
-	GPIO_tim.Pull = GPIO_NOPULL;
-	GPIO_tim.Speed = GPIO_SPEED_FREQ_LOW;
+	gpio_tim.Mode = GPIO_MODE_AF_PP;
+	gpio_tim.Pull = GPIO_NOPULL;
+	gpio_tim.Speed = GPIO_SPEED_FREQ_LOW;
 
-	GPIO_tim.Alternate = GPIO_AF2_TIM3;
-	GPIO_tim.Pin = GPIO_PIN_4;
-	HAL_GPIO_Init(GPIOB, &GPIO_tim);
+	gpio_tim.Alternate = GPIO_AF2_TIM3;
+	gpio_tim.Pin = GPIO_PIN_4;
+	HAL_GPIO_Init(GPIOB, &gpio_tim);
 
 
-	timh.Instance = TIM3;
-	timh.Init.Prescaler         = 20;
-	timh.Init.Period            = 100;
-	timh.Init.ClockDivision     = 0;
-	timh.Init.CounterMode       = TIM_COUNTERMODE_UP;
-	timh.Init.RepetitionCounter = 0;
-	if (HAL_TIM_PWM_Init(&timh) != HAL_OK)
+	tim_pwm_handle.Instance = TIM3;
+	tim_pwm_handle.Init.Prescaler         = 20;
+	tim_pwm_handle.Init.Period            = 100;
+	tim_pwm_handle.Init.ClockDivision     = 0;
+	tim_pwm_handle.Init.CounterMode       = TIM_COUNTERMODE_UP;
+	tim_pwm_handle.Init.RepetitionCounter = 0;
+	if (HAL_TIM_PWM_Init(&tim_pwm_handle) != HAL_OK)
 	{
 		/* Initialization Error */
 		Error_Handler();
 	}
 
-	occonf.OCFastMode = TIM_OCFAST_DISABLE;
-	occonf.OCIdleState = TIM_OCIDLESTATE_RESET;
-	occonf.OCMode = TIM_OCMODE_PWM1;
-	occonf.OCPolarity = TIM_OCPOLARITY_HIGH;
-	occonf.Pulse = 100;
+	pwm_conf.OCFastMode = TIM_OCFAST_DISABLE;
+	pwm_conf.OCIdleState = TIM_OCIDLESTATE_RESET;
+	pwm_conf.OCMode = TIM_OCMODE_PWM1;
+	pwm_conf.OCPolarity = TIM_OCPOLARITY_HIGH;
+	pwm_conf.Pulse = 100;
 
 	/* Set the pulse value for channel 1 */
-	if (HAL_TIM_PWM_ConfigChannel(&timh, &occonf, TIM_CHANNEL_1) != HAL_OK)
+	if (HAL_TIM_PWM_ConfigChannel(&tim_pwm_handle, &pwm_conf, TIM_CHANNEL_1) != HAL_OK)
 	{
 		/* Configuration Error */
 		Error_Handler();
@@ -306,38 +285,38 @@ void pwm_init()
 	while (1) {
 		//ctrl_up();
 		//delay(2000);
-		printf("%d\n", __HAL_TIM_GET_COUNTER(&TimHandle));
+		printf("%d\n", __HAL_TIM_GET_COUNTER(&tim_base_handle));
 	}
 }
 
 void delay(uint64_t Delay)
 {
-  uint64_t tickstart = __HAL_TIM_GET_COUNTER(&TimHandle);
-  while ((__HAL_TIM_GET_COUNTER(&TimHandle) - tickstart) < Delay) {
+  uint64_t tickstart = __HAL_TIM_GET_COUNTER(&tim_base_handle);
+  while ((__HAL_TIM_GET_COUNTER(&tim_base_handle) - tickstart) < Delay) {
   }
 
 }
 
 void end_bit()
 {
-	HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
 	delay(1);
-	HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
 }
 
 void bit_one()
 {
-	HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
 	delay(1);
-	HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
 	delay(3);
 }
 
 void bit_zero()
 {
-	HAL_TIM_PWM_Start(&timh, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
 	delay(3);
-	HAL_TIM_PWM_Stop(&timh, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
 	delay(1);
 }
 
@@ -457,19 +436,6 @@ static void SystemClock_Config(void)
   }
 }
 
-/**
-  * @brief  Retargets the C library printf function to the USART.
-  * @param  None
-  * @retval None
-  */
-PUTCHAR_PROTOTYPE
-{
-  /* Place your implementation of fputc here */
-  /* e.g. write a character to the USART1 and Loop until the end of transmission */
-  HAL_UART_Transmit(&hDiscoUart, (uint8_t *)&ch, 1, 0xFFFF);
-
-  return ch;
-}
 
 void Error_Handler(void)
 {  
