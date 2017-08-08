@@ -7,7 +7,7 @@
 #define  PERIOD_VALUE       0xFFFF	/* Period Value  */
 
 /* Private define ------------------------------------------------------------*/
-#define  PULSE_VALUE       (uint32_t)(PERIOD_VALUE/2)	/* Duty cycle 50%  */
+#define  PULSE_VALUE       (PERIOD_VALUE/2)	/* Duty cycle 50%  */
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
@@ -103,7 +103,7 @@ void time_base_init()
 void pwm_init()
 {
 	/* Compute the prescaler value to have TIM3 counter clock equal to 40000 Hz */
-	prescalervalue = (uint32_t)(SystemCoreClock / 38000) - 1;
+	prescalervalue = 20;
 
 	/* Set TIM3 instance */
 	tim_pwm_handle.Instance = TIM3;
@@ -142,7 +142,7 @@ void pwm_init()
 	while (1) {
 		ctrl_up();
 		delay(2000);
-		printf("%d\n", __HAL_TIM_GET_COUNTER(&tim_base_handle));
+		//printf("%d\n", __HAL_TIM_GET_COUNTER(&tim_base_handle));
 	}
 }
 
