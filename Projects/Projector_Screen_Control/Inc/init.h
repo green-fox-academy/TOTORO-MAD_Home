@@ -11,6 +11,7 @@
 void uart_init();
 void time_base_init();
 void pwm_init();
+void delay(uint16_t delay_value);
 
 #endif /* __INIT_H */
 

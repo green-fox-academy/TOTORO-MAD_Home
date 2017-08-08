@@ -48,10 +48,8 @@
 #define CONNECTION_TRIAL_MAX          10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
-uint8_t remote_ip[] = {10, 27, 99, 112};
-uint8_t rx_data [1];
-
-uint16_t rx_Len;
+uint8_t remote_ip[] = {10, 27, 99, 50};
+uint8_t rx_data;
 uint8_t  mac_addr[6];
 uint8_t  ip_addr[4];
 
@@ -121,7 +119,6 @@ int main(void) {
 						remote_ip[2],
 						remote_ip[3],
 						SERVER_PORT);
-
 				while (trials--) {
 					if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 0) == WIFI_STATUS_OK) {
 						printf("> TCP Connection opened successfully.\n");
@@ -145,21 +142,20 @@ int main(void) {
 		printf("> ERROR : WIFI Module cannot be initialized.\n");
 		BSP_LED_On(LED2);
 	}
-
 	while (1) {
 		if (socket != -1) {
 			do {
 				printf("waiting for data\n");
-				if(WIFI_ReceiveData(socket, (uint8_t*)rx_data, sizeof(rx_data), &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
+				if(WIFI_ReceiveData(socket, &rx_data, sizeof(rx_data), &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
 					printf("disconnected from server\n");
 					WIFI_CloseClientConnection(socket);
 					socket = -1;
 				}
-				if (rx_data[0] == 1) {
+				if (rx_data == 1) {
 					ctrl_up();
-				} else if (rx_data[0] == 2) {
+				} else if (rx_data == 2) {
 					ctrl_down();
-				} else if (rx_data[0] == 3) {
+				} else if (rx_data == 3) {
 					ctrl_stop();
 				} else {
 					printf("Wrong command!");
@@ -185,7 +181,7 @@ int main(void) {
 
 /**
   * @brief  System Clock Configuration
-  *         The system Clock is configured as follow : 
+  *         The system Clock is configured as follow :
   *            System Clock source            = PLL (MSI)
   *            SYSCLK(Hz)                     = 80000000
   *            HCLK(Hz)                       = 80000000
@@ -224,14 +220,14 @@ static void SystemClock_Config(void)
     /* Initialization Error */
     while(1);
   }
-  
-  /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 
+
+  /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
      clocks dividers */
   RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;  
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;  
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
   if(HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
   {
     /* Initialization Error */

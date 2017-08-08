@@ -1,13 +1,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "ps_control.h"
 #include "stm32l4xx_hal.h"
-#include "stm32l475e_iot01.h"
-#include "wifi.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define COMMAND_SIZE 24
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
+/* Command arrays */
 uint8_t ctrl_up_arr[COMMAND_SIZE] = {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 									 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0};
 
@@ -19,17 +18,8 @@ uint8_t ctrl_stop_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 
 uint8_t ctrl_verification_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 		   	   	   	   	   	   	   	  	  	  1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1};
-
-/* UART variables */
-
 /* PWM variables */
-TIM_HandleTypeDef tim_pwm_handle;
-TIM_OC_InitTypeDef pwm_conf;
-
-/* TIM_Base variables */
-TIM_HandleTypeDef tim_base_handle;
-uint32_t prescalervalue = 0;	/* Prescaler declaration */
-
+extern TIM_HandleTypeDef tim_pwm_handle;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 

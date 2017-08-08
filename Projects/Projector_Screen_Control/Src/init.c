@@ -2,7 +2,6 @@
 #include "init.h"
 #include "stm32l4xx_hal.h"
 #include "stm32l475e_iot01.h"
-#include "wifi.h"
 /* Private typedef -----------------------------------------------------------*/
 #define  PERIOD_VALUE       0xFFFF	/* Period Value  */
 
@@ -30,9 +29,7 @@ TIM_HandleTypeDef tim_base_handle;
 #else
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif /* __GNUC__ */
-
 void error_handling(const char *error_string, uint8_t error_code);
-void delay(uint16_t delay_value);
 
 void uart_init()
 {
