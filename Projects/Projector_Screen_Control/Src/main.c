@@ -68,22 +68,12 @@ uint8_t ctrl_stop_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 
 uint8_t ctrl_verification_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 		   	   	   	   	   	   	   	  	  	  1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1};
-TIM_HandleTypeDef tim_pwm_handle;
-TIM_OC_InitTypeDef pwm_conf;
-GPIO_InitTypeDef gpio_tim;
-
-TIM_HandleTypeDef tim_base_handle;
 
 /* Prescaler declaration */
-uint32_t uwPrescalerValue = 0;
-
-uint8_t irq_cntr = 0;
-
+extern TIM_HandleTypeDef tim_pwm_handle;
+extern TIM_HandleTypeDef tim_base_handle;
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
-void Error_Handler(void);
-void pwm_init();
-void time_base_init();
 void delay(uint64_t Delay);
 void end_bit();
 void bit_one();
@@ -198,96 +188,7 @@ int main(void) {
 		}//while
 	}//main
 
-void time_base_init()
-{
-	/* Compute the prescaler value to have TIMx counter clock equal to 10000 Hz */
-	uwPrescalerValue = (uint32_t)((SystemCoreClock) / 1742) - 1;
 
-	/* Set TIMx instance */
-	tim_base_handle.Instance = TIMx;
-
-	/* Initialize TIMx peripheral as follows:
-	   + Period = 10000 - 1
-	   + Prescaler = ((SystemCoreClock / 2)/10000) - 1
-	   + ClockDivision = 0
-	   + Counter direction = Up
-	*/
-	tim_base_handle.Init.Period            = 0xFFFF;
-	tim_base_handle.Init.Prescaler         = uwPrescalerValue;
-	tim_base_handle.Init.ClockDivision     = 0;
-	tim_base_handle.Init.CounterMode       = TIM_COUNTERMODE_UP;
-	tim_base_handle.Init.RepetitionCounter = 0;
-	if (HAL_TIM_Base_Init(&tim_base_handle) != HAL_OK)
-	{
-		/* Initialization Error */
-		Error_Handler();
-	}
-
-	/*##-2- Start the TIM Base generation in interrupt mode ####################*/
-	/* Start Channel1 */
-	if (HAL_TIM_Base_Start(&tim_base_handle) != HAL_OK)
-	{
-		/* Starting Error */
-		Error_Handler();
-	}
-}
-
-void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
-{
-  /*##-1- Enable peripheral clock #################################*/
-  /* TIMx Peripheral clock enable */
-  TIMx_CLK_ENABLE();
-}
-
-void pwm_init()
-{
-	/*##-1- Enable peripherals and GPIO Clocks #################################*/
-	/* TIM3 Peripheral clock enable */
-	__HAL_RCC_TIM3_CLK_ENABLE();
-	/* Enable GPIO Channels Clock */
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-
-	/* Configure PA.15 (connected to D9) (TIM3_Channel1)*/
-	gpio_tim.Mode = GPIO_MODE_AF_PP;
-	gpio_tim.Pull = GPIO_NOPULL;
-	gpio_tim.Speed = GPIO_SPEED_FREQ_LOW;
-
-	gpio_tim.Alternate = GPIO_AF2_TIM3;
-	gpio_tim.Pin = GPIO_PIN_4;
-	HAL_GPIO_Init(GPIOB, &gpio_tim);
-
-
-	tim_pwm_handle.Instance = TIM3;
-	tim_pwm_handle.Init.Prescaler         = 20;
-	tim_pwm_handle.Init.Period            = 100;
-	tim_pwm_handle.Init.ClockDivision     = 0;
-	tim_pwm_handle.Init.CounterMode       = TIM_COUNTERMODE_UP;
-	tim_pwm_handle.Init.RepetitionCounter = 0;
-	if (HAL_TIM_PWM_Init(&tim_pwm_handle) != HAL_OK)
-	{
-		/* Initialization Error */
-		Error_Handler();
-	}
-
-	pwm_conf.OCFastMode = TIM_OCFAST_DISABLE;
-	pwm_conf.OCIdleState = TIM_OCIDLESTATE_RESET;
-	pwm_conf.OCMode = TIM_OCMODE_PWM1;
-	pwm_conf.OCPolarity = TIM_OCPOLARITY_HIGH;
-	pwm_conf.Pulse = 100;
-
-	/* Set the pulse value for channel 1 */
-	if (HAL_TIM_PWM_ConfigChannel(&tim_pwm_handle, &pwm_conf, TIM_CHANNEL_1) != HAL_OK)
-	{
-		/* Configuration Error */
-		Error_Handler();
-	}
-
-	while (1) {
-		//ctrl_up();
-		//delay(2000);
-		printf("%d\n", __HAL_TIM_GET_COUNTER(&tim_base_handle));
-	}
-}
 
 void delay(uint64_t Delay)
 {
@@ -437,15 +338,6 @@ static void SystemClock_Config(void)
 }
 
 
-void Error_Handler(void)
-{  
-  /* User can add his own implementation to report the HAL error return state */
-  printf("!!! ERROR !!!\n");
-  BSP_LED_On(LED2);
-  while(1) 
-  {
-  }
-}
 
 #ifdef  USE_FULL_ASSERT
 /**

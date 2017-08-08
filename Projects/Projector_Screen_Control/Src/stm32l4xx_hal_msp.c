@@ -64,7 +64,30 @@
   * @param htim: TIM handle pointer
   * @retval None
   */
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim) {
+	/*##-1- Enable peripheral clock #################################*/
+	/* TIM2 Peripheral clock enable */
+	__HAL_RCC_TIM2_CLK_ENABLE();
+}
 
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim) {
+	/* GPIO Init structure*/
+	GPIO_InitTypeDef gpio_tim;
+	/*##-1- Enable peripherals and GPIO Clocks #################################*/
+	/* TIM3 Peripheral clock enable */
+	__HAL_RCC_TIM3_CLK_ENABLE();
+	/* Enable GPIO Channels Clock */
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+
+	/* Configure PA.15 (connected to D9) (TIM3_Channel1)*/
+	gpio_tim.Mode = GPIO_MODE_AF_PP;
+	gpio_tim.Pull = GPIO_NOPULL;
+	gpio_tim.Speed = GPIO_SPEED_FREQ_LOW;
+
+	gpio_tim.Alternate = GPIO_AF2_TIM3;
+	gpio_tim.Pin = GPIO_PIN_4;
+	HAL_GPIO_Init(GPIOB, &gpio_tim);
+}
 /**
   * @}
   */

@@ -13,6 +13,9 @@
 
 /* Exported functions ------------------------------------------------------- */
 void uart_init();
+void time_base_init();
+void pwm_init();
+
 #endif /* __INIT_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
