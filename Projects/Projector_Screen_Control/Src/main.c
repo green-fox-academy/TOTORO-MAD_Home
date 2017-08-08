@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    BSP/Src/main.c 
+\  * @file    BSP/Src/main.c
   * @author  MCD Application Team
   * @version V1.8.0
   * @date    21-April-2017
@@ -304,8 +304,9 @@ void pwm_init()
 	}
 
 	while (1) {
-		ctrl_up();
-		delay(2000);
+		//ctrl_up();
+		//delay(2000);
+		printf("%d\n", __HAL_TIM_GET_COUNTER(&TimHandle));
 	}
 }
 
