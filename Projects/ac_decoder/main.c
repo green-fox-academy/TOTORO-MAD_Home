@@ -27,7 +27,7 @@ int main()
     }
 // array filling algorithm
     for (int i = 0; i < 3; i++) {
-        printf("\n\n\n\n\n\n\n\n");
+        printf("\n\n\n\n%s\n\n", pelda[i]);
         while (fgets(string, 50, files[i])) {
             time_1 = atof(strtok (string, ","));
             voltage_1 = atof(strtok (NULL, "\n"));
@@ -39,7 +39,7 @@ int main()
                     voltage_2 = atof(strtok (NULL, "\n"));
                     if (abs(voltage_2 - voltage_1) > 2.5) {
                         voltage_status = !voltage_status;
-                        ups_and_downs[j] = (time_2 - time_1) * 1000;
+                        ups_and_downs[j] = (time_2 - time_1) * 1000 + 40;
                         printf("%d\n", ups_and_downs[j]);
                         j++;
 
