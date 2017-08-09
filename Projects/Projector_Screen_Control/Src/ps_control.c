@@ -1,22 +1,24 @@
 /* Includes ------------------------------------------------------------------*/
 #include "ps_control.h"
 #include "stm32l4xx_hal.h"
+#include "init.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define COMMAND_SIZE 24
+#define COMMAND_SIZE	24
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
 /* Command arrays */
-uint8_t ctrl_up_arr[COMMAND_SIZE] = {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
+const uint8_t ctrl_up_arr[COMMAND_SIZE] = {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 									 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0};
 
-uint8_t ctrl_down_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
+const uint8_t ctrl_down_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 									  1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1};
 
-uint8_t ctrl_stop_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
+const uint8_t ctrl_stop_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 		   	   	   	   	   	   	   	  1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1};
 
-uint8_t ctrl_verification_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
+const uint8_t ctrl_verification_arr[COMMAND_SIZE]= {1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
 		   	   	   	   	   	   	   	  	  	  1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1};
 /* PWM variables */
 extern TIM_HandleTypeDef tim_pwm_handle;

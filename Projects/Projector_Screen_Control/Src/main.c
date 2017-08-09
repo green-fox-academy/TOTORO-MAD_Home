@@ -40,18 +40,18 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define SSID     "A66 Guest"
-#define PASSWORD "Hello123"
-#define SERVER_PORT 8002
-#define WIFI_WRITE_TIMEOUT 10000
-#define WIFI_READ_TIMEOUT  10000
-#define CONNECTION_TRIAL_MAX          10
+#define SSID     				"A66 Guest"
+#define PASSWORD 				"Hello123"
+#define SERVER_PORT 			8002
+#define WIFI_WRITE_TIMEOUT 		10000
+#define WIFI_READ_TIMEOUT  		10000
+#define CONNECTION_TRIAL_MAX    10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
 uint8_t remote_ip[] = {10, 27, 99, 50};
 uint8_t rx_data;
-uint8_t  mac_addr[6];
-uint8_t  ip_addr[4];
+uint8_t mac_addr[6];
+uint8_t ip_addr[4];
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -64,7 +64,7 @@ static void SystemClock_Config(void);
   * @retval None
   */
 int main(void) {
-	int32_t socket = -1;
+	int8_t socket = -1;
 	uint16_t datalen;
 	uint16_t trials = CONNECTION_TRIAL_MAX;
 

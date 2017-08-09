@@ -3,10 +3,10 @@
 #include "stm32l4xx_hal.h"
 #include "stm32l475e_iot01.h"
 /* Private typedef -----------------------------------------------------------*/
-#define  PERIOD_VALUE       0xFFFF	/* Period Value  */
+#define  PERIOD_VALUE	0xFFFF				/* Period Value  */
 
 /* Private define ------------------------------------------------------------*/
-#define  PULSE_VALUE       (PERIOD_VALUE/2)	/* Duty cycle 50%  */
+#define  PULSE_VALUE    (PERIOD_VALUE/2)	/* Duty cycle 50%  */
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
@@ -19,6 +19,9 @@ TIM_OC_InitTypeDef pwm_conf;
 
 /* TIM_Base variables */
 TIM_HandleTypeDef tim_base_handle;
+
+/* Delay variable */
+uint16_t tickstart;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -55,10 +58,10 @@ void uart_init()
   */
 PUTCHAR_PROTOTYPE
 {
-  /* e.g. write a character to the USART1 and Loop until the end of transmission */
-  HAL_UART_Transmit(&uart_handle, (uint8_t *)&ch, 1, 0xFFFF);
+	/* e.g. write a character to the USART1 and Loop until the end of transmission */
+	HAL_UART_Transmit(&uart_handle, (uint8_t *)&ch, 1, 0xFFFF);
 
-  return ch;
+	return ch;
 }
 
 void time_base_init()
@@ -98,9 +101,9 @@ void time_base_init()
 
 void delay(uint16_t delay_value)
 {
-  uint16_t tickstart = __HAL_TIM_GET_COUNTER(&tim_base_handle);
-  while ((__HAL_TIM_GET_COUNTER(&tim_base_handle) - tickstart) < delay_value) {
-  }
+	tickstart = __HAL_TIM_GET_COUNTER(&tim_base_handle);
+	while ((__HAL_TIM_GET_COUNTER(&tim_base_handle) - tickstart) < delay_value) {
+	}
 }
 
 void pwm_init()
