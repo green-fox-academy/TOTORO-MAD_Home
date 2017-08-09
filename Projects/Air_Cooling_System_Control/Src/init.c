@@ -67,7 +67,7 @@ PUTCHAR_PROTOTYPE
 void time_base_init()
 {
 	/* Compute the prescaler value to have TIM2 counter clock equal to 1742 Hz, period Time 574 micro sec */
-	uint32_t prescalervalue = (uint32_t)((SystemCoreClock) / 50) - 1;
+	uint32_t prescalervalue = (uint32_t)((SystemCoreClock) / 10000) - 1;
 
 	/* Set TIM2 instance */
 	tim_base_handle.Instance = TIM2;
@@ -96,6 +96,11 @@ void time_base_init()
 	{
 		/* Starting Error */
 		error_handling("Starting TIM Base has failed!", HAL_ERROR);
+	}
+
+	while (1) {
+		printf("%d", __HAL_TIM_GET_COUNTER(&tim_base_handle));
+		delay(1000);
 	}
 }
 
