@@ -48,7 +48,7 @@
 #define CONNECTION_TRIAL_MAX    10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
-uint8_t remote_ip[] = {10, 27, 99, 50};
+uint8_t remote_ip[] = {10, 27, 99, 221};
 uint8_t rx_data;
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
@@ -86,10 +86,6 @@ int main(void) {
 	/* Initialize timer in PWM mode */
 	pwm_init();
 
-	while (1) {
-		ctrl_up();
-		delay(2000);
-	}
 	/*Initialize  WIFI module */
 	if(WIFI_Init() ==  WIFI_STATUS_OK)
 	{
@@ -146,6 +142,7 @@ int main(void) {
 		printf("> ERROR : WIFI Module cannot be initialized.\n");
 		BSP_LED_On(LED2);
 	}
+
 	while (1) {
 		if (socket != -1) {
 			do {
@@ -157,9 +154,9 @@ int main(void) {
 				}
 				if (rx_data == 1) {
 					ctrl_up();
-				} else if (rx_data == 2) {
-					ctrl_down();
 				} else if (rx_data == 3) {
+					ctrl_down();
+				} else if (rx_data == 2) {
 					ctrl_stop();
 				} else {
 					printf("Wrong command!");
