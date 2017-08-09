@@ -171,10 +171,6 @@ void SysTick_Handler(void)
   * @param  None
   * @retval None
   */
-/*void PPP_IRQHandler(void)
-{
-}*/
-
 
 /**
   * @}

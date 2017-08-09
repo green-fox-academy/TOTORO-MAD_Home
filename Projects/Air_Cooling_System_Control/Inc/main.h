@@ -46,6 +46,8 @@
 #include "stm32l4xx_hal.h"
 #include "stm32l475e_iot01.h"
 #include "wifi.h"
+#include "init.h"
+#include "ac_control.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
