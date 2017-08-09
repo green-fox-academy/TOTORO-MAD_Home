@@ -86,6 +86,10 @@ int main(void) {
 	/* Initialize timer in PWM mode */
 	pwm_init();
 
+	while (1) {
+		ctrl_up();
+		delay(2000);
+	}
 	/*Initialize  WIFI module */
 	if(WIFI_Init() ==  WIFI_STATUS_OK)
 	{

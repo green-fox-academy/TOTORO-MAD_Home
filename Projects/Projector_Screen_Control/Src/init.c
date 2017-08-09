@@ -3,7 +3,7 @@
 #include "stm32l4xx_hal.h"
 #include "stm32l475e_iot01.h"
 /* Private typedef -----------------------------------------------------------*/
-#define  PERIOD_VALUE	0xFFFF				/* Period Value  */
+#define  PERIOD_VALUE	100				/* Period Value  */
 
 /* Private define ------------------------------------------------------------*/
 #define  PULSE_VALUE    (PERIOD_VALUE/2)	/* Duty cycle 50%  */
@@ -67,7 +67,7 @@ PUTCHAR_PROTOTYPE
 void time_base_init()
 {
 	/* Compute the prescaler value to have TIM2 counter clock equal to 1742 Hz, period Time 574 micro sec */
-	uint32_t prescalervalue = (uint32_t)((SystemCoreClock) / 50) - 1;
+	uint32_t prescalervalue = (uint32_t)((SystemCoreClock) / 1742) - 1;
 
 	/* Set TIM2 instance */
 	tim_base_handle.Instance = TIM2;
@@ -116,7 +116,7 @@ void pwm_init()
 
 	/* Initialize TIMx peripheral as follows:
 	   + Prescaler = (SystemCoreClock / 380000) - 1
-	   + Period = 65535
+	   + Period = 100
 	   + ClockDivision = 0
 	   + Counter direction = Up
 	*/
