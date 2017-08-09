@@ -3,10 +3,10 @@
 #include "stm32l4xx_hal.h"
 #include "stm32l475e_iot01.h"
 /* Private typedef -----------------------------------------------------------*/
-#define  PERIOD_VALUE	100				/* Period Value  */
-
+#define PERIOD_VALUE		0xFFFF				/* Period Value  */
+#define PWM_PERIOD_VALUE	100
 /* Private define ------------------------------------------------------------*/
-#define  PULSE_VALUE    (PERIOD_VALUE/2)	/* Duty cycle 50%  */
+#define PWM_PULSE_VALUE    (PWM_PERIOD_VALUE/2)	/* Duty cycle 50%  */
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
@@ -121,7 +121,7 @@ void pwm_init()
 	   + Counter direction = Up
 	*/
 	tim_pwm_handle.Init.Prescaler         = prescalervalue;
-	tim_pwm_handle.Init.Period            = PERIOD_VALUE;
+	tim_pwm_handle.Init.Period            = PWM_PERIOD_VALUE;
 	tim_pwm_handle.Init.ClockDivision     = 0;
 	tim_pwm_handle.Init.CounterMode       = TIM_COUNTERMODE_UP;
 	tim_pwm_handle.Init.RepetitionCounter = 0;
@@ -136,7 +136,7 @@ void pwm_init()
 	pwm_conf.OCIdleState = TIM_OCIDLESTATE_RESET;
 	pwm_conf.OCMode = TIM_OCMODE_PWM1;
 	pwm_conf.OCPolarity = TIM_OCPOLARITY_HIGH;
-	pwm_conf.Pulse = PULSE_VALUE;
+	pwm_conf.Pulse = PWM_PULSE_VALUE;
 
 	/* Set the pulse value for channel 1 */
 	if (HAL_TIM_PWM_ConfigChannel(&tim_pwm_handle, &pwm_conf, TIM_CHANNEL_1) != HAL_OK)
