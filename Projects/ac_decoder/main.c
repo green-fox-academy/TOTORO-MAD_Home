@@ -9,6 +9,7 @@
 #define NUMBERS_IN_A_ROW        16
 #define VOLT_DIFF_THRESHOLD     2.5
 #define BUFFER_SIZE             50
+#define NUMBER_OF_DATA          268
 
 
 
@@ -33,9 +34,9 @@ int main()
     float time_2;
     float voltage_1;
     float voltage_2;
-    uint16_t j = 0;
     uint16_t difference;
     uint8_t new_line = 0;
+    uint16_t data_counter;
 
 // open the files
     for (int i = 0; i < NUMBER_OF_FILES; i++) {
@@ -47,7 +48,7 @@ int main()
 
 // text filling algorithm
     for (int i = 0; i < NUMBER_OF_FILES; i++) {
-        j = 0;
+        data_counter = 0;
         if (i < 15)
             fprintf(text_files[i], "uint16_t degree_%d[] = {", i + NUMBER_OF_FILES);
         else
@@ -66,14 +67,19 @@ int main()
 
                     if (abs(voltage_2 - voltage_1) > VOLT_DIFF_THRESHOLD) {
                         difference = (time_2 - time_1) * MULTIPLIER + EDGE_CORRECTION;
-                        fprintf(text_files[i], "%d, ", difference);
+
+                        if (data_counter != NUMBER_OF_DATA - 1)
+                            fprintf(text_files[i], "%d, ", difference);
+                        else
+                            fprintf(text_files[i], "%d};", difference);
+
                         new_line++;
 
                         if (new_line == NUMBERS_IN_A_ROW) {
                             fprintf(text_files[i], "\n");
                             new_line = 0;
                         }
-                        j++;
+                        data_counter++;
                         break;
                     }//if
                 }//while
