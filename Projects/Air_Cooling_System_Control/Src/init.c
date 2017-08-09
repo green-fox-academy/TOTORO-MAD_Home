@@ -97,11 +97,6 @@ void time_base_init()
 		/* Starting Error */
 		error_handling("Starting TIM Base has failed!", HAL_ERROR);
 	}
-
-	while (1) {
-		printf("%d", __HAL_TIM_GET_COUNTER(&tim_base_handle));
-		delay(1000);
-	}
 }
 
 void delay(uint16_t delay_value)
