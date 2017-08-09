@@ -67,7 +67,7 @@ PUTCHAR_PROTOTYPE
 void time_base_init()
 {
 	/* Compute the prescaler value to have TIM2 counter clock equal to 1742 Hz, period Time 574 micro sec */
-	uint32_t prescalervalue = (uint32_t)((SystemCoreClock) / 10000000) - 1;
+	uint32_t prescalervalue = (uint32_t)((SystemCoreClock) / 1000000) - 1;
 
 	/* Set TIM2 instance */
 	tim_base_handle.Instance = TIM2;
@@ -79,7 +79,7 @@ void time_base_init()
 	   + Counter direction = Up
 	*/
 	tim_base_handle.Init.Period            = PERIOD_VALUE;
-	tim_base_handle.Init.Prescaler         = 0;
+	tim_base_handle.Init.Prescaler         = prescalervalue;
 	tim_base_handle.Init.ClockDivision     = 0;
 	tim_base_handle.Init.CounterMode       = TIM_COUNTERMODE_UP;
 	tim_base_handle.Init.RepetitionCounter = 0;
@@ -102,14 +102,16 @@ void time_base_init()
 void delay(uint16_t delay_value)
 {
 	tickstart = __HAL_TIM_GET_COUNTER(&tim_base_handle);
+	//if (tickstart > (65535 - 20151))
 	while ((__HAL_TIM_GET_COUNTER(&tim_base_handle) - tickstart) < delay_value) {
+
 	}
 }
 
 void pwm_init()
 {
 	/* Compute the prescaler value to have TIM3 counter clock equal to 40000 Hz */
-	uint8_t prescalervalue = 1;
+	uint8_t prescalervalue = 20;
 
 	/* Set TIM3 instance */
 	tim_pwm_handle.Instance = TIM3;
@@ -121,7 +123,7 @@ void pwm_init()
 	   + Counter direction = Up
 	*/
 	tim_pwm_handle.Init.Prescaler         = prescalervalue;
-	tim_pwm_handle.Init.Period            = PERIOD_VALUE;
+	tim_pwm_handle.Init.Period            = 100;
 	tim_pwm_handle.Init.ClockDivision     = 0;
 	tim_pwm_handle.Init.CounterMode       = TIM_COUNTERMODE_UP;
 	tim_pwm_handle.Init.RepetitionCounter = 0;
@@ -136,7 +138,7 @@ void pwm_init()
 	pwm_conf.OCIdleState = TIM_OCIDLESTATE_RESET;
 	pwm_conf.OCMode = TIM_OCMODE_PWM1;
 	pwm_conf.OCPolarity = TIM_OCPOLARITY_HIGH;
-	pwm_conf.Pulse = PULSE_VALUE;
+	pwm_conf.Pulse = 50;
 
 	/* Set the pulse value for channel 1 */
 	if (HAL_TIM_PWM_ConfigChannel(&tim_pwm_handle, &pwm_conf, TIM_CHANNEL_1) != HAL_OK)

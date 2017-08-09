@@ -52,7 +52,7 @@ uint8_t remote_ip[] = {10, 27, 99, 50};
 uint8_t rx_data;
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
-extern TIM_HandleTypeDef tim_pwm_handle;
+
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 
@@ -86,11 +86,8 @@ int main(void) {
 	/* Initialize timer in PWM mode */
 	pwm_init();
 	while (1) {
-
-		HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
-		delay(2000);
-		HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
-		delay(2000);
+		ac_ctrl();
+		HAL_Delay(2000);
 	}
 	/*Initialize  WIFI module */
 	if(WIFI_Init() ==  WIFI_STATUS_OK)
