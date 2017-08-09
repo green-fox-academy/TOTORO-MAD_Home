@@ -74,12 +74,13 @@ int main()
                             fprintf(text_files[i], "%d};", difference);
 
                         new_line++;
+                        data_counter++;
 
                         if (new_line == NUMBERS_IN_A_ROW) {
                             fprintf(text_files[i], "\n");
                             new_line = 0;
                         }
-                        data_counter++;
+
                         break;
                     }//if
                 }//while
