@@ -48,7 +48,7 @@
 #define CONNECTION_TRIAL_MAX    10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
-uint8_t remote_ip[] = {10, 27, 99, 221};
+uint8_t remote_ip[] = {10, 27, 99, 84};
 uint8_t rx_data;
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
@@ -245,7 +245,7 @@ static void SystemClock_Config(void)
   * @retval None
   */
 void assert_failed(uint8_t* file, uint32_t line)
-{ 
+{
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 
