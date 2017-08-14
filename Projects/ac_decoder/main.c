@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include "functions.h"
 
 #define NUMBER_OF_FILES         16
 #define MULTIPLIER              1000
@@ -12,12 +13,11 @@
 #define NUMBER_OF_DATA          268
 
 
-
-
 int main()
 {
     FILE* source_files[NUMBER_OF_FILES];
     FILE* text_files[NUMBER_OF_FILES];
+    FILE* bin_codes;
 
     char source[NUMBER_OF_FILES][10] = {"16.csv", "17.csv", "18.csv", "19.csv", "20.csv",
                                         "21.csv", "22.csv", "23.csv", "24.csv", "25.csv",
@@ -29,12 +29,16 @@ int main()
                                        "26.txt", "27.txt", "28.txt", "29.txt", "30.txt",
                                        "onoff.txt"};
 
+    uint8_t[NUMBER_OF_DATA / 2];
+
     char string_buffer[BUFFER_SIZE];
     float time_1;
     float time_2;
     float voltage_1;
     float voltage_2;
     uint16_t difference;
+    uint16_t prev_diff = 0;
+    uint16_t next_diff;
     uint8_t new_line = 0;
     uint16_t data_counter;
 
@@ -45,6 +49,8 @@ int main()
         if ((text_files[i] = fopen(texts[i], "w")) != NULL)
             printf("file %s opened\n", texts[i]);
     }
+
+    bin_codes = fopen("binary_codes.txt", "w");
 
 // text filling algorithm
     for (int i = 0; i < NUMBER_OF_FILES; i++) {
@@ -67,6 +73,10 @@ int main()
 
                     if (abs(voltage_2 - voltage_1) > VOLT_DIFF_THRESHOLD) {
                         difference = (time_2 - time_1) * MULTIPLIER + EDGE_CORRECTION;
+                        difference = correction(difference);
+                        next_diff = difference;
+
+
 
                         if (data_counter != NUMBER_OF_DATA - 1)
                             fprintf(text_files[i], "%d, ", difference);
