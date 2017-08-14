@@ -29,16 +29,12 @@ int main()
                                        "26.txt", "27.txt", "28.txt", "29.txt", "30.txt",
                                        "onoff.txt"};
 
-    uint8_t[NUMBER_OF_DATA / 2];
-
     char string_buffer[BUFFER_SIZE];
     float time_1;
     float time_2;
     float voltage_1;
     float voltage_2;
     uint16_t difference;
-    uint16_t prev_diff = 0;
-    uint16_t next_diff;
     uint8_t new_line = 0;
     uint16_t data_counter;
     uint8_t high_or_low = 0;
@@ -61,6 +57,8 @@ int main()
         else
             fprintf(text_files[i], "uint16_t onoff[] = {");
 
+        fprintf(bin_codes, "\n%d\t", i + NUMBER_OF_FILES);
+
         while (fgets(string_buffer, BUFFER_SIZE, source_files[i])) {
 
             time_1 = atof(strtok (string_buffer, ","));
@@ -74,13 +72,10 @@ int main()
 
                     if (abs(voltage_2 - voltage_1) > VOLT_DIFF_THRESHOLD) {
                         difference = (time_2 - time_1) * MULTIPLIER + EDGE_CORRECTION;
-                        difference = correction(difference);
+                        //difference = correction(difference);
 
                         if (high_or_low == 1)
-
-
-
-
+                            fprintf(bin_codes, "%c", filling_binary(difference));
 
                         if (data_counter != NUMBER_OF_DATA - 1)
                             fprintf(text_files[i], "%d, ", difference);
