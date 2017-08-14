@@ -66,6 +66,11 @@
 			<locationURI>PARENT-2-PROJECT_LOC/Src/stm32l4xx_it.c</locationURI>
 		</link>
 		<link>
+			<name>Application/User/wifi_conn.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Src/wifi_conn.c</locationURI>
+		</link>
+		<link>
 			<name>Application/Wifi/es_wifi.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/Src/es_wifi.c</locationURI>
