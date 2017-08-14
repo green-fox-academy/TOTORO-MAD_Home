@@ -41,6 +41,7 @@ int main()
     uint16_t next_diff;
     uint8_t new_line = 0;
     uint16_t data_counter;
+    uint8_t high_or_low = 0;
 
 // open the files
     for (int i = 0; i < NUMBER_OF_FILES; i++) {
@@ -74,7 +75,10 @@ int main()
                     if (abs(voltage_2 - voltage_1) > VOLT_DIFF_THRESHOLD) {
                         difference = (time_2 - time_1) * MULTIPLIER + EDGE_CORRECTION;
                         difference = correction(difference);
-                        next_diff = difference;
+
+                        if (high_or_low == 1)
+
+
 
 
 
@@ -85,6 +89,7 @@ int main()
 
                         new_line++;
                         data_counter++;
+                        high_or_low = !high_or_low;
 
                         if (new_line == NUMBERS_IN_A_ROW) {
                             fprintf(text_files[i], "\n");
