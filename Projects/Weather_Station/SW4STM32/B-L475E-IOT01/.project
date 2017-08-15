@@ -215,5 +215,36 @@
 			<type>1</type>
 			<locationURI>PARENT-4-PROJECT_LOC/Drivers/BSP/Components/lsm6dsl/lsm6dsl.c</locationURI>
 		</link>
+		<link>
+			<name>Middlewares/FatFs/Core/diskio.c</name>
+			<type>1</type>
+			<locationURI>copy_PARENT/Middlewares/Third_Party/FatFs/src/diskio.c</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/FatFs/Core/ff.c</name>
+			<type>1</type>
+			<locationURI>copy_PARENT/Middlewares/Third_Party/FatFs/src/ff.c</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/FatFs/Core/ff_gen_drv.c</name>
+			<type>1</type>
+			<locationURI>copy_PARENT/Middlewares/Third_Party/FatFs/src/ff_gen_drv.c</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/FatFs/Options/syscall.c</name>
+			<type>1</type>
+			<locationURI>copy_PARENT/Middlewares/Third_Party/FatFs/src/option/syscall.c</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/FatFs/Options/unicode.c</name>
+			<type>1</type>
+			<locationURI>copy_PARENT/Middlewares/Third_Party/FatFs/src/option/unicode.c</locationURI>
+		</link>
 	</linkedResources>
+	<variableList>
+		<variable>
+			<name>copy_PARENT</name>
+			<value>$%7BPARENT-5-PROJECT_LOC%7D/greenfox/SMARTHOME/STM32Cube_FW_L4_V1.8.0</value>
+		</variable>
+	</variableList>
 </projectDescription>
