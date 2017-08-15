@@ -50,6 +50,7 @@
 #include "stm32l475e_iot01_hsensor.h"
 #include "sensors.h"
 #include "wifi.h"
+#include "wifi_conn.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

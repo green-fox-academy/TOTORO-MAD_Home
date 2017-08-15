@@ -37,32 +37,17 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "sensors.h"
-
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define SSID     "A66 Guest"
-#define PASSWORD "Hello123"
-#define SERVER_PORT 8002
-
-#define WIFI_WRITE_TIMEOUT 10000
-#define WIFI_READ_TIMEOUT  10000
-
-#define CONNECTION_TRIAL_MAX          10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
-extern UART_HandleTypeDef hDiscoUart;
-uint8_t remote_ip[] = {10, 27, 99, 29};
-char rx_data [500];
-char* modulename;
-float tx_data[3];
-uint16_t rx_len;
-uint8_t  mac_addr[6];
-uint8_t  ip_addr[4];
+UART_HandleTypeDef hDiscoUart;
+
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 void Error_Handler(void);
+void uart_init();
 #ifdef __GNUC__
 /* With GCC, small printf (option LD Linker->Libraries->Small printf
    set to 'Yes') calls __io_putchar() */
@@ -70,6 +55,7 @@ void Error_Handler(void);
 #else
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif /* __GNUC__ */
+
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -78,10 +64,6 @@ void Error_Handler(void);
   * @retval None
   */
 int main(void) {
-	int32_t socket = -1;
-	uint16_t datalen;
-	uint16_t trials = CONNECTION_TRIAL_MAX;
-
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
 
@@ -91,107 +73,15 @@ int main(void) {
 	/* Configure LED2 */
 	BSP_LED_Init(LED2);
 
-	//Initialize sensors
+	/* Initialize sensors */
 	sensor_inits();
 
+	/* Configure UART */
+	uart_init();
 
-
-	/* Initialize all configured peripherals */
-	hDiscoUart.Instance = DISCOVERY_COM1;
-	hDiscoUart.Init.BaudRate = 115200;
-	hDiscoUart.Init.WordLength = UART_WORDLENGTH_8B;
-	hDiscoUart.Init.StopBits = UART_STOPBITS_1;
-	hDiscoUart.Init.Parity = UART_PARITY_NONE;
-	hDiscoUart.Init.Mode = UART_MODE_TX_RX;
-	hDiscoUart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	hDiscoUart.Init.OverSampling = UART_OVERSAMPLING_16;
-	hDiscoUart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-	hDiscoUart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-
-	BSP_COM_Init(COM1, &hDiscoUart);
-
-	/*Initialize  WIFI module */
-	if(WIFI_Init() ==  WIFI_STATUS_OK)
-	{
-		printf("> WIFI Module Initialized.\n");
-		if(WIFI_GetMAC_Address(mac_addr) == WIFI_STATUS_OK)
-		{
-			printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
-				   mac_addr[0],
-				   mac_addr[1],
-				   mac_addr[2],
-				   mac_addr[3],
-				   mac_addr[4],
-				   mac_addr[5]);
-		} else {
-			printf("> ERROR : CANNOT get MAC address\n");
-			BSP_LED_On(LED2);
-		}
-
-		if (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK) {
-			printf("> es-wifi module connected \n");
-			if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
-				printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
-						ip_addr[0],
-						ip_addr[1],
-						ip_addr[2],
-						ip_addr[3]);
-
-				printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
-						remote_ip[0],
-						remote_ip[1],
-						remote_ip[2],
-						remote_ip[3],
-						SERVER_PORT);
-
-				while (trials--) {
-					if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 0) == WIFI_STATUS_OK) {
-						printf("> TCP Connection opened successfully.\n");
-						socket = 0;
-					}
-				}
-
-				if (!trials) {
-					printf("> ERROR : Cannot open Connection\n");
-					BSP_LED_On(LED2);
-				}
-			} else {
-				printf("> ERROR : es-wifi module CANNOT get IP address\n");
-				BSP_LED_On(LED2);
-			}
-		} else {
-			printf("> ERROR : es-wifi module NOT connected\n");
-			BSP_LED_On(LED2);
-		}
-	} else {
-		printf("> ERROR : WIFI Module cannot be initialized.\n");
-		BSP_LED_On(LED2);
-	}
-
-	while (1) {
-		if (socket != -1) {
-			do {
-				tx_data[0] = get_temperature();
-				tx_data[1] = get_humidity();
-				tx_data[2] = get_pressure();
-
-				if(WIFI_SendData(socket, (uint8_t*)tx_data, sizeof(tx_data), &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
-					printf("disconnected from server\n");
-					WIFI_CloseClientConnection(socket);
-					socket = -1;
-				}
-				HAL_Delay(10000);
-			} while (datalen > 0);
-		} else {
-			printf("trying to reconnect\n");
-			if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 0) == WIFI_STATUS_OK) {
-				printf("> TCP Connection opened successfully.\n");
-				socket = 0;
-			}
-			HAL_Delay(5000);
-		}//else
-	}//while
-}//main
+	/* Sending sensor data through WIFI connection to HQ device*/
+	send_sensor_data();
+}
 
 /**
   * @brief  Configure all GPIO's to AN to reduce the power consumption
@@ -277,6 +167,23 @@ void Error_Handler(void)
   while(1) 
   {
   }
+}
+
+void uart_init()
+{
+	/* Initialize all configured peripherals */
+	hDiscoUart.Instance = DISCOVERY_COM1;
+	hDiscoUart.Init.BaudRate = 115200;
+	hDiscoUart.Init.WordLength = UART_WORDLENGTH_8B;
+	hDiscoUart.Init.StopBits = UART_STOPBITS_1;
+	hDiscoUart.Init.Parity = UART_PARITY_NONE;
+	hDiscoUart.Init.Mode = UART_MODE_TX_RX;
+	hDiscoUart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	hDiscoUart.Init.OverSampling = UART_OVERSAMPLING_16;
+	hDiscoUart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+	hDiscoUart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+
+	BSP_COM_Init(COM1, &hDiscoUart);
 }
 
 #ifdef  USE_FULL_ASSERT
