@@ -48,6 +48,7 @@
 #include "wifi.h"
 #include "init.h"
 #include "ps_control.h"
+#include "wifi_conn.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

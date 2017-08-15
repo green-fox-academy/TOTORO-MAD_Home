@@ -40,19 +40,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define SSID     				"A66 Guest"
-#define PASSWORD 				"Hello123"
-#define SERVER_PORT 			8002
-#define WIFI_WRITE_TIMEOUT 		10000
-#define WIFI_READ_TIMEOUT  		10000
-#define CONNECTION_TRIAL_MAX    10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
-uint8_t remote_ip[] = {10, 27, 99, 82};
-uint8_t rx_data;
-uint8_t mac_addr[6];
-uint8_t ip_addr[4];
-
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 
@@ -64,9 +53,6 @@ static void SystemClock_Config(void);
   * @retval None
   */
 int main(void) {
-	int8_t socket = -1;
-	uint16_t datalen;
-	uint16_t trials = CONNECTION_TRIAL_MAX;
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
@@ -86,95 +72,8 @@ int main(void) {
 	/* Initialize timer in PWM mode */
 	pwm_init();
 
-	/*Initialize  WIFI module */
-	if(WIFI_Init() ==  WIFI_STATUS_OK)
-	{
-		printf("> WIFI Module Initialized.\n");
-		if(WIFI_GetMAC_Address(mac_addr) == WIFI_STATUS_OK)
-		{
-			printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
-				   mac_addr[0],
-				   mac_addr[1],
-				   mac_addr[2],
-				   mac_addr[3],
-				   mac_addr[4],
-				   mac_addr[5]);
-		} else {
-			printf("> ERROR : CANNOT get MAC address\n");
-			BSP_LED_On(LED2);
-		}
+	send_ps_command();
 
-		if (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK) {
-			printf("> es-wifi module connected \n");
-			if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
-				printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
-						ip_addr[0],
-						ip_addr[1],
-						ip_addr[2],
-						ip_addr[3]);
-
-				printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
-						remote_ip[0],
-						remote_ip[1],
-						remote_ip[2],
-						remote_ip[3],
-						SERVER_PORT);
-				while (trials--) {
-					if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 0) == WIFI_STATUS_OK) {
-						printf("> TCP Connection opened successfully.\n");
-						socket = 0;
-					}
-				}
-
-				if (!trials) {
-					printf("> ERROR : Cannot open Connection\n");
-					BSP_LED_On(LED2);
-				}
-			} else {
-				printf("> ERROR : es-wifi module CANNOT get IP address\n");
-				BSP_LED_On(LED2);
-			}
-		} else {
-			printf("> ERROR : es-wifi module NOT connected\n");
-			BSP_LED_On(LED2);
-		}
-	} else {
-		printf("> ERROR : WIFI Module cannot be initialized.\n");
-		BSP_LED_On(LED2);
-	}
-
-	while (1) {
-		if (socket != -1) {
-			do {
-				printf("waiting for data\n");
-				if(WIFI_ReceiveData(socket, &rx_data, sizeof(rx_data), &datalen, WIFI_READ_TIMEOUT ) != WIFI_STATUS_OK) {
-					printf("disconnected from server\n");
-					WIFI_CloseClientConnection(socket);
-					socket = -1;
-				}
-				if (rx_data == 1) {
-					ctrl_up();
-					printf("going up\n");
-				} else if (rx_data == 3) {
-					ctrl_down();
-					printf("going down\n");
-				} else if (rx_data == 2) {
-					ctrl_stop();
-					printf("STAPH!!\n");
-				} else {
-					printf("Wrong command!");
-				}
-				//HAL_Delay(10000);
-			} while (datalen > 0);
-		} else {
-			printf("trying to reconnect\n");
-			if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 0) == WIFI_STATUS_OK) {
-				printf("> TCP Connection opened successfully.\n");
-				socket = 0;
-			}
-			HAL_Delay(5000);
-		}//else
-	}//while
 }//main
 
 /**

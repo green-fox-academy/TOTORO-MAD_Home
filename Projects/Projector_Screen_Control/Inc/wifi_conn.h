@@ -6,15 +6,14 @@
 #include "wifi.h"
 #include "stm32l475e_iot01.h"
 #include "stdio.h"
-#include "sensors.h"
 
 /* Defines -------------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-void send_sensor_data();
-
+void wifi_init();
+void send_ps_command();
 #endif /* __WIFI_CONN_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
