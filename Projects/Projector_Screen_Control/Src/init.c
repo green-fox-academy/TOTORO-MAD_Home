@@ -102,7 +102,12 @@ void time_base_init()
 void delay(uint16_t delay_value)
 {
 	tickstart = __HAL_TIM_GET_COUNTER(&tim_base_handle);
-	while ((__HAL_TIM_GET_COUNTER(&tim_base_handle) - tickstart) < delay_value) {
+
+	if ((delay_value + tickstart) > 0xFFFF) {
+		while (__HAL_TIM_GET_COUNTER(&tim_base_handle) != 0);
+		while (__HAL_TIM_GET_COUNTER(&tim_base_handle) != delay_value - (0xFFFF - tickstart));
+	} else {
+		while ((__HAL_TIM_GET_COUNTER(&tim_base_handle) - tickstart) < delay_value);
 	}
 }
 
