@@ -37,13 +37,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "sensors.h"
-#include "timer.h"
-#include "stm32l4xx_hal_conf.h"
-#include "stm32l4xx_hal.h"
-#include "stm32l4xx_it.h"
-#include "stm32l4xx_hal_rtc.h"
-#include "stm32l4xx_hal_def.h"
 
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,6 +55,9 @@
 #define CONNECTION_TRIAL_MAX          10
 
 #define NTP_TIMESTAMP_DELTA 2208988800ull
+#define RTC_ASYNCH_PREDIV  0xFF
+#define RTC_SYNCH_PREDIV   0xFF
+#define __HAL_RTC_RESET_HANDLE_STATE(__HANDLE__) ((__HANDLE__)->State = HAL_RTC_STATE_RESET)
 
 
 /* Private macro -------------------------------------------------------------*/
@@ -77,8 +73,17 @@ uint16_t RxLen;
 uint8_t  MAC_Addr[6];
 uint8_t  IP_Addr[4];
 
+/* RTC handler declaration */
+RTC_HandleTypeDef RtcHandle;
+
+/* Buffers used for displaying Time and Date */
+uint8_t aShowTime[50] = {0}, aShowTimeStamp[50] = {0};
+uint8_t aShowDate[50] = {0}, aShowDateStamp[50] = {0};
+
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
+static void RTC_TimeStampConfig(void);
+static void RTC_CalendarShow(void);
 void Error_Handler(void);
 #if defined (TERMINAL_USE)
 #ifdef __GNUC__
@@ -91,14 +96,6 @@ void Error_Handler(void);
 #endif /* TERMINAL_USE */
 /* Private functions ---------------------------------------------------------*/
 
-
-RTC_HandleTypeDef RtcHandle;
-
-/* Buffers used for displaying Time and Date */
-uint8_t aShowTime[50] = {0}, aShowTimeStamp[50] = {0};
-uint8_t aShowDate[50] = {0}, aShowDateStamp[50] = {0};
-
-
 /**
   * @brief  Main program.
   * @param  None
@@ -106,58 +103,21 @@ uint8_t aShowDate[50] = {0}, aShowDateStamp[50] = {0};
   */
 int main(void)
 {
-	int32_t Socket = -1;
+	/*int32_t Socket = -1;
 	uint16_t Datalen;
-	uint16_t Trials = CONNECTION_TRIAL_MAX;
+	uint16_t Trials = CONNECTION_TRIAL_MAX;*/
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
 
 	/* Configure the system clock */
 	SystemClock_Config();
+
 	/* Configure LED2 */
 	BSP_LED_Init(LED2);
-	timer_init();
+
 	//Initialize sensors
 	sensor_inits();
-
-/*##-1- Configure the RTC peripheral #######################################*/
-  /* Configure RTC prescaler and RTC data registers */
-  /* RTC configured as follow:
-	  - Hour Format    = Format 12
-	  - Asynch Prediv  = Value according to source clock
-	  - Synch Prediv   = Value according to source clock
-	  - OutPut         = Output Disable
-	  - OutPutPolarity = High Polarity
-	  - OutPutType     = Open Drain */
-
-	HAL_RTC_STATE_RESET(&RtcHandle);
-	RtcHandle.Instance = RTC;
-	RtcHandle.Init.HourFormat = RTC_HOURFORMAT_12;
-	//RtcHandle.Init.AsynchPrediv = ;
-	//RtcHandle.Init.SynchPrediv = ;
-	RtcHandle.Init.OutPut = RTC_OUTPUT_DISABLE;
-	RtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
-	RtcHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
-	RtcHandle.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
-
-	 if(HAL_RTC_Init(&RtcHandle) != HAL_OK)
-	  {
-		/* Initialization Error */
-		Error_Handler();
-	  }
-
-	  /*##-2-  Configure RTC Timestamp ############################################*/
-	  RTC_TimeStampConfig();
-
-	  /* Infinite loop */
-	  while (1)
-	  {
-		/*##-3- Display the updated Time and Date ################################*/
-		RTC_CalendarShow();
-	  }
-
-
 
 	/* Initialize all configured peripherals */
 	hDiscoUart.Instance = DISCOVERY_COM1;
@@ -173,10 +133,49 @@ int main(void)
 
 	BSP_COM_Init(COM1, &hDiscoUart);
 
+	/* Configure Wkup/Tamper push-button button */
+	BSP_PB_Init(BUTTON_USER,BUTTON_MODE_GPIO);
 
 
+
+	/*##-1- Configure the RTC peripheral #######################################*/
+	/* Configure RTC prescaler and RTC data registers */
+	/* RTC configured as follow:
+	  - Hour Format    = Format 12
+	  - Asynch Prediv  = Value according to source clock
+	  - Synch Prediv   = Value according to source clock
+	  - OutPut         = Output Disable
+	  - OutPutPolarity = High Polarity
+	  - OutPutType     = Open Drain */
+	__HAL_RTC_RESET_HANDLE_STATE(&RtcHandle);
+
+	RtcHandle.Instance = RTC;
+	RtcHandle.Init.HourFormat = RTC_HOURFORMAT_24;
+	RtcHandle.Init.AsynchPrediv = RTC_ASYNCH_PREDIV;
+	RtcHandle.Init.SynchPrediv = RTC_SYNCH_PREDIV;
+	RtcHandle.Init.OutPut = RTC_OUTPUT_DISABLE;
+	RtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+	RtcHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+	RtcHandle.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
+
+	 if(HAL_RTC_Init(&RtcHandle) != HAL_OK) {
+		/* Initialization Error */
+		Error_Handler();
+	 }
+
+	  /*##-2-  Configure RTC Timestamp ############################################*/
+	  RTC_TimeStampConfig();
+
+
+	while(1){
+	    /*##-3- Display the updated Time and Date ################################*/
+	    RTC_CalendarShow();
+	    //HAL_Delay(1000);
+	}
+
+}
 	/*Initialize  WIFI module */
-	if(WIFI_Init() ==  WIFI_STATUS_OK)
+	/*if(WIFI_Init() ==  WIFI_STATUS_OK)
 	{
 		printf("> WIFI Module Initialized.\n");
 		if(WIFI_GetMAC_Address(MAC_Addr) == WIFI_STATUS_OK)
@@ -257,7 +256,8 @@ int main(void)
 			HAL_Delay(5000);
 		}//else
 	}//while
-}//main
+*/
+//}//main
 
 /**
   * @brief  Configure all GPIO's to AN to reduce the power consumption
@@ -284,7 +284,7 @@ int main(void)
   * @param  None
   * @retval None
   */
-
+/*
 void ntp_client(int argc, char* argv[ ])
 {
 	int sockfd;
@@ -333,12 +333,32 @@ void ntp_client(int argc, char* argv[ ])
 
 	// Create a UDP socket, convert the host-name to an IP address, set the port number,
 	// connect to the server,send the packet,and then read in the return packet.
-	struct sockaddr_in serv_addr;  // Server address data structure.
+	//struct sockaddr_in serv_addr;  // Server address data structure.
 	struct hostent* server;   // Server data structure.
 
+	//sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Create a UDP socket.
+}*/
 
-}
 
+/**
+  * @brief  System Clock Configuration
+  *         The system Clock is configured as follow :
+  *            System Clock source            = PLL (MSI)
+  *            SYSCLK(Hz)                     = 80000000
+  *            HCLK(Hz)                       = 80000000
+  *            AHB Prescaler                  = 1
+  *            APB1 Prescaler                 = 1
+  *            APB2 Prescaler                 = 1
+  *            MSI Frequency(Hz)              = 4000000
+  *            PLL_M                          = 1
+  *            PLL_N                          = 40
+  *            PLL_R                          = 2
+  *            PLL_P                          = 7
+  *            PLL_Q                          = 4
+  *            Flash Latency(WS)              = 4
+  * @param  None
+  * @retval None
+  */
 static void SystemClock_Config(void)
 {
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
@@ -374,6 +394,92 @@ static void SystemClock_Config(void)
     /* Initialization Error */
     while(1);
   }
+}
+
+/**
+  * @brief  Configure the current time and date and activate timestamp.
+  * @param  None
+  * @retval None
+  */
+static void RTC_TimeStampConfig(void)
+{
+  RTC_DateTypeDef sdatestructure;
+  RTC_TimeTypeDef stimestructure;
+
+  /*##-1- Configure the Time Stamp peripheral ################################*/
+  /*  RTC TimeStamp generation: TimeStamp Rising Edge on PC.13 Pin */
+  HAL_RTCEx_SetTimeStamp_IT(&RtcHandle, RTC_TIMESTAMPEDGE_RISING, RTC_TIMESTAMPPIN_DEFAULT);
+
+  /*##-2- Configure the Date #################################################*/
+  /* Set Date: Monday April 14th 2014 */
+  sdatestructure.Year    = 0x17;
+  sdatestructure.Month   = RTC_MONTH_AUGUST;
+  sdatestructure.Date    = 0x09;
+  sdatestructure.WeekDay = RTC_WEEKDAY_THURSDAY;
+
+  if(HAL_RTC_SetDate(&RtcHandle,&sdatestructure,RTC_FORMAT_BCD) != HAL_OK)
+  {
+    /* Initialization Error */
+    Error_Handler();
+  }
+
+  /*##-3- Configure the Time #################################################*/
+   /* Set Time: 08:10:00 */
+   stimestructure.Hours          = 0x08;
+   stimestructure.Minutes        = 0x10;
+   stimestructure.Seconds        = 0x00;
+   stimestructure.SubSeconds     = 0x00;
+   stimestructure.TimeFormat     = RTC_HOURFORMAT12_AM;
+   stimestructure.DayLightSaving = RTC_DAYLIGHTSAVING_NONE ;
+   stimestructure.StoreOperation = RTC_STOREOPERATION_RESET;
+
+   if(HAL_RTC_SetTime(&RtcHandle,&stimestructure,RTC_FORMAT_BCD) != HAL_OK)
+   {
+     /* Initialization Error */
+     Error_Handler();
+   }
+}
+
+/**
+  * @brief  Timestamp callback
+  * @param  hrtc : hrtc handle
+  * @retval None
+  */
+void HAL_RTCEx_TimeStampEventCallback(RTC_HandleTypeDef *hrtc)
+{
+  RTC_DateTypeDef sTimeStampDateget;
+  RTC_TimeTypeDef sTimeStampget;
+
+  HAL_RTCEx_GetTimeStamp(&RtcHandle, &sTimeStampget, &sTimeStampDateget, RTC_FORMAT_BIN);
+
+  /* Display time Format : hh:mm:ss */
+  sprintf((char*)aShowTimeStamp,"%.2d:%.2d:%.2d", sTimeStampget.Hours, sTimeStampget.Minutes, sTimeStampget.Seconds);
+  /* Display date Format : mm-dd */
+  sprintf((char*)aShowDateStamp,"%.2d-%.2d-%.2d", sTimeStampDateget.Month, sTimeStampDateget.Date, 2014);
+}
+
+/**
+  * @brief  Display the current time and date.
+  * @param  showtime : pointer to buffer
+  * @param  showdate : pointer to buffer
+  * @retval None
+  */
+static void RTC_CalendarShow(void)
+{
+  RTC_DateTypeDef sdatestructureget;
+  RTC_TimeTypeDef stimestructureget;
+
+  /* Get the RTC current Time */
+  HAL_RTC_GetTime(&RtcHandle, &stimestructureget, RTC_FORMAT_BIN);
+  /* Get the RTC current Date */
+  HAL_RTC_GetDate(&RtcHandle, &sdatestructureget, RTC_FORMAT_BIN);
+
+  /* Display time Format : hh:mm:ss */
+  sprintf((char*)aShowTime,"%.2d:%.2d:%.2d", stimestructureget.Hours, stimestructureget.Minutes, stimestructureget.Seconds);
+  /* Display date Format : mm-dd-yy */
+  sprintf((char*)aShowDate,"%.2d-%.2d-%.2d", sdatestructureget.Month, sdatestructureget.Date, 2000 + sdatestructureget.Year);
+  printf("%s       %s\n", (char*)aShowTime,(char*)aShowDate);
+
 }
 
 #if defined (TERMINAL_USE)

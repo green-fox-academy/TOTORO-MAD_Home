@@ -48,9 +48,26 @@
 #include "stm32l475e_iot01_tsensor.h"
 #include "stm32l475e_iot01_psensor.h"
 #include "stm32l475e_iot01_hsensor.h"
-#include "stm32l475e_iot01_qspi.h"
 #include "sensors.h"
 #include "wifi.h"
+#include "stm32l4xx_hal_rtc.h"
+#include "stm32l4xx_it.h"
+#include <stdio.h>
+
+/* Defines related to Clock configuration */
+/* Uncomment to enable the adaquate Clock Source */
+#define RTC_CLOCK_SOURCE_LSI
+/*#define RTC_CLOCK_SOURCE_LSE*/
+
+#ifdef RTC_CLOCK_SOURCE_LSI
+#define RTC_ASYNCH_PREDIV    0x7F
+#define RTC_SYNCH_PREDIV     0xF9
+#endif
+
+#ifdef RTC_CLOCK_SOURCE_LSE
+#define RTC_ASYNCH_PREDIV  0x7F
+#define RTC_SYNCH_PREDIV   0x00FF
+#endif
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

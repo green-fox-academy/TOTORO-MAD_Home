@@ -1,11 +1,11 @@
 /**
   ******************************************************************************
-  * @file    BSP/Src/stm32l4xx_it.c 
+  * @file    RTC/RTC_TimeStamp/Src/stm32l4xx_it.c
   * @author  MCD Application Team
   * @version V1.8.0
   * @date    21-April-2017
   * @brief   Main Interrupt Service Routines.
-  *          This file provides template for all exceptions handler and 
+  *          This file provides template for all exceptions handler and
   *          peripherals interrupt service routine.
   ******************************************************************************
   * @attention
@@ -38,14 +38,14 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 #include "stm32l4xx_it.h"
+#include "main.h"
 
 /** @addtogroup STM32L4xx_HAL_Examples
   * @{
   */
 
-/** @addtogroup BSP
+/** @addtogroup RTC_TimeStamp
   * @{
   */
 
@@ -53,6 +53,8 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+/* RTC handler declared in "main.c" file */
+extern RTC_HandleTypeDef RtcHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -62,7 +64,7 @@
 /******************************************************************************/
 
 /**
-  * @brief   This function handles NMI exception.
+  * @brief  This function handles NMI exception.
   * @param  None
   * @retval None
   */
@@ -163,8 +165,18 @@ void SysTick_Handler(void)
 /*                 STM32L4xx Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */
 /*  available peripheral interrupt handler's name please refer to the startup */
-/*  file (startup_stm32l4xxxx.s).                                             */
+/*  file (startup_stm32l4xx.s).                                               */
 /******************************************************************************/
+
+/**
+  * @brief  This function handles Tamper interrupt request.
+  * @param  None
+  * @retval None
+  */
+void TAMP_STAMP_IRQHandler(void)
+{
+  HAL_RTCEx_TamperTimeStampIRQHandler(&RtcHandle);
+}
 
 /**
   * @brief  This function handles PPP interrupt request.
@@ -178,7 +190,7 @@ void SysTick_Handler(void)
 
 /**
   * @}
-  */ 
+  */
 
 /**
   * @}
