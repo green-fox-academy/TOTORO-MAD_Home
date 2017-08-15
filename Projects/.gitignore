@@ -3,3 +3,15 @@
 !*.project
 !*.ld
 !*.s
+
+### CodeBlocks ###
+# specific to CodeBlocks IDE
+*.cbp
+*.layout
+*.depend
+*.csv
+*.txt
+
+# generated directories
+bin/
+obj/

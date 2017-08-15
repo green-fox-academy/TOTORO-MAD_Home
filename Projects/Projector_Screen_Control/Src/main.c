@@ -42,13 +42,13 @@
 /* Private define ------------------------------------------------------------*/
 #define SSID     				"A66 Guest"
 #define PASSWORD 				"Hello123"
-#define SERVER_PORT 			8003
+#define SERVER_PORT 			8002
 #define WIFI_WRITE_TIMEOUT 		10000
 #define WIFI_READ_TIMEOUT  		10000
 #define CONNECTION_TRIAL_MAX    10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
-uint8_t remote_ip[] = {10, 27, 99, 224};
+uint8_t remote_ip[] = {10, 27, 99, 82};
 uint8_t rx_data;
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
@@ -147,17 +147,20 @@ int main(void) {
 		if (socket != -1) {
 			do {
 				printf("waiting for data\n");
-				if(WIFI_ReceiveData(socket, &rx_data, sizeof(rx_data), &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
+				if(WIFI_ReceiveData(socket, &rx_data, sizeof(rx_data), &datalen, WIFI_READ_TIMEOUT ) != WIFI_STATUS_OK) {
 					printf("disconnected from server\n");
 					WIFI_CloseClientConnection(socket);
 					socket = -1;
 				}
 				if (rx_data == 1) {
 					ctrl_up();
+					printf("going up\n");
 				} else if (rx_data == 3) {
 					ctrl_down();
+					printf("going down\n");
 				} else if (rx_data == 2) {
 					ctrl_stop();
+					printf("STAPH!!\n");
 				} else {
 					printf("Wrong command!");
 				}
