@@ -54,8 +54,8 @@ void ac_ctrl()
 {
 	for (int i = 0; i < COMMAND_SIZE; i=i+2) {
 		HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
-		delay(onoff[i]);
+		delay(degree_16[i]);
 		HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
-		delay(onoff[(i+1)]);
+		delay(degree_16[(i+1)]);
 	}
 }
