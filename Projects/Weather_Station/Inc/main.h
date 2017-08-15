@@ -44,13 +44,22 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal.h"
+/* IOT includes component */
 #include "stm32l475e_iot01.h"
+
+/* Sensor includes component */
 #include "stm32l475e_iot01_tsensor.h"
 #include "stm32l475e_iot01_psensor.h"
 #include "stm32l475e_iot01_hsensor.h"
 #include "sensors.h"
+
+/* WIFI includes component */
 #include "wifi.h"
 #include "wifi_conn.h"
+
+/* FatFs includes component */
+#include "ff_gen_drv.h"
+#include "sd_diskio.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
