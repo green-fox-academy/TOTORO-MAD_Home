@@ -47,7 +47,6 @@ void send_ps_command()
     	/*do-while connected to WIFI AP(checking connection by pinging own IP Address) */
 		printf("Start TCP Server...\n");
 		WIFI_StartServer(socket, WIFI_TCP_PROTOCOL, "", SERVER_PORT);
-		printf("----------------------------------------- \n");
 		printf("TCP Server Started \n");
 		do {
 			printf("receiving data...\n");
@@ -85,10 +84,10 @@ void send_ps_command()
 			if (WIFI_StopServer(socket) == WIFI_STATUS_OK) {
 				printf("----------------------------------------- \n");
 				printf("Waiting for connection...\n");
-				while (WIFI_StartServer(socket, WIFI_TCP_PROTOCOL, "", SERVER_PORT) != WIFI_STATUS_OK);
+				WIFI_StartServer(socket, WIFI_TCP_PROTOCOL, "", SERVER_PORT);
 				printf("TCP Server Started \n");
 			}
-		} while (WIFI_Ping(ip_addr, 1, 1) == WIFI_STATUS_OK);	//do-while
+		} while (WIFI_Ping(ip_addr, 0, 0) == WIFI_STATUS_OK);	//do-while
 		/*If there might be a problem with pinging, disconnect from WIFI AP anyway */
 		printf("> Disconnected from WIFI!\n");
 		WIFI_Disconnect();
