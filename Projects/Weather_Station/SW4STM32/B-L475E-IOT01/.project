@@ -171,6 +171,11 @@
 			<locationURI>PARENT-2-PROJECT_LOC/Src/stm32l4xx_it.c</locationURI>
 		</link>
 		<link>
+			<name>Example/Wifi/def.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Src/def.c</locationURI>
+		</link>
+		<link>
 			<name>Example/Wifi/es_wifi.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/Src/es_wifi.c</locationURI>

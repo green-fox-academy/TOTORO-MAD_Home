@@ -53,6 +53,12 @@
 #include "stm32l4xx_hal_rtc.h"
 #include "stm32l4xx_it.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdint.h>
+#include "def.h"
 
 /* Defines related to Clock configuration */
 /* Uncomment to enable the adaquate Clock Source */
@@ -73,16 +79,6 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-void QSPI_demo(void);
-void QSPI_MemoryMapped_demo(void);
-void Temperature_Test(void);
-void Humidity_Test(void);
-void Pressure_Test(void);
-void Gyro_Test(void);
-void Magneto_Test(void);
-void Accelero_Test(void);
-
-uint32_t Serial_Scanf(uint32_t value);
 void Error_Handler(void);
 
 #endif /* __MAIN_H */

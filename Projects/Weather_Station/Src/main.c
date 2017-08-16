@@ -40,12 +40,40 @@
 
 
 /* Private typedef -----------------------------------------------------------*/
+typedef struct
+	{
+	  unsigned li   : 2;          // Only two bits. Leap indicator.
+	  unsigned vn   : 3;          // Only three bits. Version number of the protocol.
+	  unsigned mode : 3;          // Only three bits. Mode. Client will pick mode 3 for client.
 
+	  uint8_t stratum;           // Eight bits. Stratum level of the local clock.
+	  uint8_t poll;              // Eight bits. Maximum interval between successive messages.
+	  uint8_t precision;         // Eight bits. Precision of the local clock.
+
+	  uint32_t rootDelay;        // 32 bits. Total round trip delay time.
+	  uint32_t rootDispersion;   // 32 bits. Max error aloud from primary clock source.
+	  uint32_t refId;            // 32 bits. Reference clock identifier.
+
+	  uint32_t refTm_s;          // 32 bits. Reference time-stamp seconds.
+	  uint32_t refTm_f;          // 32 bits. Reference time-stamp fraction of a second.
+
+	  uint32_t origTm_s;         // 32 bits. Originate time-stamp seconds.
+	  uint32_t origTm_f;         // 32 bits. Originate time-stamp fraction of a second.
+
+	  uint32_t rxTm_s;           // 32 bits. Received time-stamp seconds.
+	  uint32_t rxTm_f;           // 32 bits. Received time-stamp fraction of a second.
+
+	  uint32_t txTm_s;           // 32 bits and the most important field the client cares about. Transmit time-stamp seconds.
+	  uint32_t txTm_f;           // 32 bits. Transmit time-stamp fraction of a second.
+
+
+	}ntp_packet;                         // Total: 384 bits or 48 bytes.
 
 /* Private define ------------------------------------------------------------*/
 #define SSID     "A66 Guest"
 #define PASSWORD "Hello123"
 #define SERVER_PORT 8002
+#define NTP_SERVER_PORT 123
 
 #define WIFI_WRITE_TIMEOUT 10000
 #define WIFI_READ_TIMEOUT  10000
@@ -54,9 +82,10 @@
 
 #define CONNECTION_TRIAL_MAX          10
 
+#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
+#define bcopy(b1,b2,len) (memmove((b2), (b1), (len)), (void) 0)
+
 #define NTP_TIMESTAMP_DELTA 2208988800ull
-#define RTC_ASYNCH_PREDIV  0xFF
-#define RTC_SYNCH_PREDIV   0xFF
 #define __HAL_RTC_RESET_HANDLE_STATE(__HANDLE__) ((__HANDLE__)->State = HAL_RTC_STATE_RESET)
 
 
@@ -65,13 +94,17 @@
 #if defined (TERMINAL_USE)
 extern UART_HandleTypeDef hDiscoUart;
 #endif /* TERMINAL_USE */
-uint8_t RemoteIP[] = {10, 27, 99, 50};
-char RxData [500];
+uint8_t remote_ip[] = {10, 27, 99, 50};
+char rx_data [100];
 char* modulename;
-float TxData[3];
-uint16_t RxLen;
-uint8_t  MAC_Addr[6];
-uint8_t  IP_Addr[4];
+float tx_data[3];
+uint16_t rxlen;
+uint8_t  mac_addr[6];
+uint8_t  ip_addr[4];
+uint8_t host_ip [4];
+char hostname [] = "europe.pool.ntp.org";
+ntp_packet packet = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
 
 /* RTC handler declaration */
 RTC_HandleTypeDef RtcHandle;
@@ -103,9 +136,13 @@ void Error_Handler(void);
   */
 int main(void)
 {
-	/*int32_t Socket = -1;
-	uint16_t Datalen;
-	uint16_t Trials = CONNECTION_TRIAL_MAX;*/
+	int32_t socket = -1;
+	uint16_t datalen;
+	uint16_t trials = CONNECTION_TRIAL_MAX;
+
+	memset(&packet, 0, sizeof(ntp_packet));
+
+	*((char*)&packet + 0) = 0x1b;
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
@@ -167,26 +204,26 @@ int main(void)
 	  RTC_TimeStampConfig();
 
 
-	while(1){
-	    /*##-3- Display the updated Time and Date ################################*/
+	/*while(1){
+	   // ##-3- Display the updated Time and Date ################################
 	    RTC_CalendarShow();
 	    //HAL_Delay(1000);
-	}
+	}*/
 
-}
-	/*Initialize  WIFI module */
-	/*if(WIFI_Init() ==  WIFI_STATUS_OK)
+
+/*Initialize  WIFI module */
+	if(WIFI_Init() ==  WIFI_STATUS_OK)
 	{
 		printf("> WIFI Module Initialized.\n");
-		if(WIFI_GetMAC_Address(MAC_Addr) == WIFI_STATUS_OK)
+		if(WIFI_GetMAC_Address(mac_addr) == WIFI_STATUS_OK)
 		{
 			printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
-				   MAC_Addr[0],
-				   MAC_Addr[1],
-				   MAC_Addr[2],
-				   MAC_Addr[3],
-				   MAC_Addr[4],
-				   MAC_Addr[5]);
+				   mac_addr[0],
+				   mac_addr[1],
+				   mac_addr[2],
+				   mac_addr[3],
+				   mac_addr[4],
+				   mac_addr[5]);
 		} else {
 			printf("> ERROR : CANNOT get MAC address\n");
 			BSP_LED_On(LED2);
@@ -194,28 +231,29 @@ int main(void)
 
 		if (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK) {
 			printf("> es-wifi module connected \n");
-			if (WIFI_GetIP_Address(IP_Addr) == WIFI_STATUS_OK) {
+			if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
 				printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
-						IP_Addr[0],
-						IP_Addr[1],
-						IP_Addr[2],
-						IP_Addr[3]);
+						ip_addr[0],
+						ip_addr[1],
+						ip_addr[2],
+						ip_addr[3]);
 
+
+				WIFI_GetHostAddress(hostname, host_ip);
 				printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
-						RemoteIP[0],
-						RemoteIP[1],
-						RemoteIP[2],
-						RemoteIP[3],
-						SERVER_PORT);
-
-				while (Trials--) {
-					if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, SERVER_PORT, 0) == WIFI_STATUS_OK) {
-						printf("> TCP Connection opened successfully.\n");
-						Socket = 0;
+						host_ip[0],
+						host_ip[1],
+						host_ip[2],
+						host_ip[3],
+						NTP_SERVER_PORT);
+				while (trials--) {
+					if (WIFI_OpenClientConnection(0, WIFI_UDP_PROTOCOL, "UDP_CLIENT", host_ip, NTP_SERVER_PORT, 0) == WIFI_STATUS_OK) {
+						printf("> UDP Connection opened successfully.\n");
+						socket = 0;
 					}
 				}
 
-				if (!Trials) {
+				if (!trials) {
 					printf("> ERROR : Cannot open Connection\n");
 					BSP_LED_On(LED2);
 				}
@@ -231,33 +269,39 @@ int main(void)
 		printf("> ERROR : WIFI Module cannot be initialized.\n");
 		BSP_LED_On(LED2);
 	}
-
 	while (1) {
-		if (Socket != -1) {
+		if (socket != -1) {
 			do {
-				TxData[0] = get_temperature();
-				TxData[1] = get_humidity();
-				TxData[2] = get_pressure();
-
-				printf("temperature: %.2f°C\t humidity: %.2f""%""\t pressure: %.2f\n", TxData[0], TxData[1], TxData[2]);
-
-				if(WIFI_SendData(Socket, TxData, sizeof(TxData), &Datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
-					Socket = -1;
+				WIFI_SendData(socket, (char*)&packet, sizeof(packet), &datalen, WIFI_WRITE_TIMEOUT);
+				printf("waiting for data\n");
+				if(WIFI_ReceiveData(socket, (char*)&packet, sizeof(packet), &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
 					printf("disconnected from server\n");
+					WIFI_CloseClientConnection(socket);
+					socket = -1;
+					//RTC_TimeStampConfig(); atadni parameterkent a idot es datumot
+					//aShowTime[50] es  aShowDate[50]  beletenni rx_data[] tombbe
 				}
-				HAL_Delay(10000);
-			} while (Datalen > 0);
+					packet.txTm_s = ntohl(packet.txTm_s); // Time-stamp seconds.
+					packet.txTm_f = ntohl(packet.txTm_f); // Time-stamp fraction of a second.
+
+
+					time_t   txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA);
+
+				   // Print the time we got from the server,accounting for local timezone and conversion from UTC time.
+				   printf("Time: %s",ctime((const time_t*)&txTm));
+
+				//HAL_Delay(10000);
+			} while (datalen > 0);
 		} else {
 			printf("trying to reconnect\n");
-			if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, SERVER_PORT, 0) == WIFI_STATUS_OK) {
+			if (WIFI_OpenClientConnection(0, WIFI_UDP_PROTOCOL, "UDP_CLIENT", remote_ip, SERVER_PORT, 0) == WIFI_STATUS_OK) {
 				printf("> TCP Connection opened successfully.\n");
-				Socket = 0;
+				socket = 0;
 			}
 			HAL_Delay(5000);
 		}//else
 	}//while
-*/
-//}//main
+}//main
 
 /**
   * @brief  Configure all GPIO's to AN to reduce the power consumption
@@ -284,7 +328,7 @@ int main(void)
   * @param  None
   * @retval None
   */
-/*
+
 void ntp_client(int argc, char* argv[ ])
 {
 	int sockfd;
@@ -334,10 +378,25 @@ void ntp_client(int argc, char* argv[ ])
 	// Create a UDP socket, convert the host-name to an IP address, set the port number,
 	// connect to the server,send the packet,and then read in the return packet.
 	//struct sockaddr_in serv_addr;  // Server address data structure.
-	struct hostent* server;   // Server data structure.
+	//struct hostent* server;   // Server data structure.
 
 	//sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Create a UDP socket.
-}*/
+
+	// These two fields contain the time-stamp seconds as the packet left the NTP server.
+   // The number of seconds correspond to the seconds passed since 1900.
+   // ntohl() converts the bit/byte order from the network's to host's "endianness".
+   packet.txTm_s = ntohl(packet.txTm_s); // Time-stamp seconds.
+   packet.txTm_f = ntohl(packet.txTm_f); // Time-stamp fraction of a second.
+
+   // Extract the 32 bits that represent the time-stamp seconds (since NTP epoch) from when the packet left the server.
+   // Subtract 70 years worth of seconds from the seconds since 1900.
+   // This leaves the seconds since the UNIX epoch of 1970.
+   // (1900)------------------(1970)**************************************(Time Packet Left the Server)
+   time_t   txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA);
+
+   // Print the time we got from the server,accounting for local timezone and conversion from UTC time.
+   printf("Time: %s",ctime((const time_t*)&txTm));
+}
 
 
 /**
