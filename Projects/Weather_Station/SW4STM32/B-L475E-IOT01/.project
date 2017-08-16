@@ -243,27 +243,27 @@
 		<link>
 			<name>Middlewares/FatFs/Core/diskio.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT/Middlewares/Third_Party/FatFs/src/diskio.c</locationURI>
+			<location>C:/Users/Adam/Desktop/MAD_Home/Middlewares/Third_Party/FatFs/src/diskio.c</location>
 		</link>
 		<link>
 			<name>Middlewares/FatFs/Core/ff.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT/Middlewares/Third_Party/FatFs/src/ff.c</locationURI>
+			<location>C:/Users/Adam/Desktop/MAD_Home/Middlewares/Third_Party/FatFs/src/ff.c</location>
 		</link>
 		<link>
 			<name>Middlewares/FatFs/Core/ff_gen_drv.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT/Middlewares/Third_Party/FatFs/src/ff_gen_drv.c</locationURI>
+			<location>C:/Users/Adam/Desktop/MAD_Home/Middlewares/Third_Party/FatFs/src/ff_gen_drv.c</location>
 		</link>
 		<link>
 			<name>Middlewares/FatFs/Options/syscall.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT/Middlewares/Third_Party/FatFs/src/option/syscall.c</locationURI>
+			<location>C:/Users/Adam/Desktop/MAD_Home/Middlewares/Third_Party/FatFs/src/option/syscall.c</location>
 		</link>
 		<link>
 			<name>Middlewares/FatFs/Options/unicode.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT/Middlewares/Third_Party/FatFs/src/option/unicode.c</locationURI>
+			<location>C:/Users/Adam/Desktop/MAD_Home/Middlewares/Third_Party/FatFs/src/option/unicode.c</location>
 		</link>
 	</linkedResources>
 	<variableList>
