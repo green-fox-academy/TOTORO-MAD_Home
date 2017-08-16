@@ -3,14 +3,14 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define SSID     				"A66 Guest"
-#define PASSWORD 				"Hello123"
+#define SSID     				"HUAWEI-B206"
+#define PASSWORD 				"47213979"
 #define SERVER_PORT 			8005
-#define WIFI_WRITE_TIMEOUT 		1000
+#define WIFI_WRITE_TIMEOUT 		10
 #define CONNECTION_TRIAL_MAX    10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
-uint8_t remote_ip[] = {10, 27, 99, 63};
+uint8_t remote_ip[] = {192, 168, 8, 101};
 float tx_data[3];
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
@@ -82,7 +82,7 @@ void send_sensor_data()
 			}
 			/*Closing socket when connection is lost or could'not connect */
 			WIFI_CloseClientConnection(socket);
-		} while (WIFI_Ping(ip_addr, 1, 1) == WIFI_STATUS_OK);	//do-while
+		} while (WIFI_Ping(ip_addr, 0, 0) == WIFI_STATUS_OK);	//do-while
 		/*If there might be a problem with pinging, disconnect from WIFI AP anyway */
 		printf("> Disconnected from WIFI!\n");
 		WIFI_Disconnect();
