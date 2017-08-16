@@ -77,7 +77,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32l476g_eval_sd.h"
+#include "stm32l475e_iot01_sd.h"
 
 /** @addtogroup BSP
   * @{

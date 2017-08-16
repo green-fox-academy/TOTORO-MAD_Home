@@ -40,8 +40,6 @@
 #define __MAIN_H
 
 /* Defines -------------------------------------------------------------------*/
-/* #define USE_LPS22HB_TEMP */
-
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal.h"
 /* IOT includes component */

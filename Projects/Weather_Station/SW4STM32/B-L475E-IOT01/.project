@@ -206,6 +206,11 @@
 			<locationURI>PARENT-4-PROJECT_LOC/Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_psensor.c</locationURI>
 		</link>
 		<link>
+			<name>Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_sd.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Src/stm32l475e_iot01_sd.c</locationURI>
+		</link>
+		<link>
 			<name>Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_tsensor.c</name>
 			<type>1</type>
 			<locationURI>PARENT-4-PROJECT_LOC/Drivers/BSP/B-L475E-IOT01/stm32l475e_iot01_tsensor.c</locationURI>

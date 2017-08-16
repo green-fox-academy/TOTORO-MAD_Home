@@ -36,8 +36,8 @@
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32L476G_EVAL_SD_H
-#define __STM32L476G_EVAL_SD_H
+#ifndef __STM32L475E_IOT01_SD_H
+#define __STM32L475E_IOT01_SD_H
 
 #ifdef __cplusplus
  extern "C" {
@@ -155,6 +155,6 @@ uint8_t BSP_SD_IsDetected(void);
 }
 #endif
 
-#endif /* __STM32L476G_EVAL_SD_H */
+#endif /* __STM32L475E_IOT01_SD_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
