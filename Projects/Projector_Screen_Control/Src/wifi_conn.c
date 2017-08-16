@@ -7,18 +7,17 @@
 /* Private define ------------------------------------------------------------*/
 #define SSID     				"A66 Guest"
 #define PASSWORD 				"Hello123"
-#define SERVER_PORT 			8005
-#define WIFI_WRITE_TIMEOUT 		1000
+#define SERVER_PORT 			16000
+#define WIFI_READ_TIMEOUT 		10000
 #define CONNECTION_TRIAL_MAX    10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
-uint8_t rx_data;
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
-int32_t socket;
+int32_t socket = 0;
 uint16_t datalen;
 uint8_t conn_flag;
-uint8_t command;
+char command;
 
 /* Private function prototypes -----------------------------------------------*/
 void error_handling(const char *error_string, uint8_t error_code);
@@ -45,28 +44,31 @@ void send_ps_command()
 		} else {
 			error_handling("> ERROR : es-wifi module CANNOT get IP address\n", WIFI_STATUS_ERROR);
 		}
-
     	/*do-while connected to WIFI AP(checking connection by pinging own IP Address) */
+		printf("Start TCP Server...\n");
+		WIFI_StartServer(socket, WIFI_TCP_PROTOCOL, "", SERVER_PORT);
+		printf("----------------------------------------- \n");
+		printf("TCP Server Started \n");
 		do {
-			printf("waiting for connection 1\n");
-			if (WIFI_StartServer(socket, WIFI_TCP_PROTOCOL, "TCP_SERVER", 16000) != WIFI_STATUS_OK) {
+			printf("receiving data...\n");
+			if (socket == -1) {
 				error_handling("> Cannot create server!\n", WIFI_STATUS_ERROR);
 			} else {
-				printf("waiting for connection 2\n");
 		    	/*Trying to connect to server and sending data when connected in every 10 seconds */
-				while (WIFI_ReceiveData(socket, &command, sizeof(command), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK) {
-					printf("waiting for connection 3\n");
-					if (rx_data == 1) {
+				WIFI_ReceiveData(socket, &command, sizeof(command), &datalen, WIFI_READ_TIMEOUT);
+				if (datalen > 0) {
+					if (command == '1') {
 						ctrl_up();
 						printf("going up\n");
-					} else if (rx_data == 3) {
+					} else if (command == '3') {
 						ctrl_down();
 						printf("going down\n");
-					} else if (rx_data == 2) {
+					} else if (command == '2') {
 						ctrl_stop();
 						printf("STAPH!!\n");
 					} else {
-						printf("Wrong command!");
+						printf("Wrong command!\n");
+						printf("%d\n", command);
 					}
 				}
 
@@ -78,8 +80,14 @@ void send_ps_command()
 					conn_flag = 0;
 				}
 			}
+			printf("Closing the socket...\n");
 			/*Closing socket when connection is lost or could'not connect */
-			WIFI_StopServer(socket);
+			if (WIFI_StopServer(socket) == WIFI_STATUS_OK) {
+				printf("----------------------------------------- \n");
+				printf("Waiting for connection...\n");
+				while (WIFI_StartServer(socket, WIFI_TCP_PROTOCOL, "", SERVER_PORT) != WIFI_STATUS_OK);
+				printf("TCP Server Started \n");
+			}
 		} while (WIFI_Ping(ip_addr, 1, 1) == WIFI_STATUS_OK);	//do-while
 		/*If there might be a problem with pinging, disconnect from WIFI AP anyway */
 		printf("> Disconnected from WIFI!\n");
