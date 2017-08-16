@@ -3,6 +3,7 @@
 !*.project
 !*.ld
 !*.s
+*.cfg
 
 ### CodeBlocks ###
 # specific to CodeBlocks IDE
