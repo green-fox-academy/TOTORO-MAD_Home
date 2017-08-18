@@ -1099,7 +1099,7 @@ ES_WIFI_Status_t ES_WIFI_SetProductName(ES_WIFIObject_t *Obj, uint8_t *ProductNa
   return ret;
 }
 
-#if (ES_WIFI_USE_FIRMWAREUPDATE == 1)
+//#if (ES_WIFI_USE_FIRMWAREUPDATE == 1)
 /**
   * @brief  OTA Firmware Upgrade.
   * @param  Obj: pointer to module handle
@@ -1108,13 +1108,13 @@ ES_WIFI_Status_t ES_WIFI_SetProductName(ES_WIFIObject_t *Obj, uint8_t *ProductNa
   */
 ES_WIFI_Status_t ES_WIFI_OTA_Upgrade(ES_WIFIObject_t *Obj, uint8_t *link)
 {
-  ES_WIFI_Status_t ret ;
+  ES_WIFI_Status_t ret;
   
-  sprintf((char*)Obj->CmdData,"Z0=%d\r%s",strlen((char *)link), (char *)link);
-  ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData); 
+  sprintf((char*)Obj->CmdData,"ZO=%d\r%s",strlen((char *)link), (char *)link);
+  ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
   return ret;
 }
-#endif
+//#endif
 #if (ES_WIFI_USE_UART == 1)
 /**
   * @brief  Set UART Baud Rate.

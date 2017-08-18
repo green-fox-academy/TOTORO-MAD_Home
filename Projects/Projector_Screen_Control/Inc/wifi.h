@@ -170,6 +170,9 @@ WIFI_Status_t       WIFI_CloseClientConnection(uint32_t socket);
 
 WIFI_Status_t       WIFI_StartServer(uint32_t socket, WIFI_Protocol_t type, const char* name, uint16_t port);
 WIFI_Status_t       WIFI_StopServer(uint32_t socket);
+WIFI_Status_t 		WIFI_StartMultiConnServer(uint32_t socket, WIFI_Protocol_t protocol, const char* name, uint16_t port);
+WIFI_Status_t 		WIFI_StopMultiConnServer(uint32_t socket);
+
 
 WIFI_Status_t       WIFI_SendData(uint8_t socket, uint8_t *pdata, uint16_t Reqlen, uint16_t *SentDatalen, uint32_t Timeout);
 WIFI_Status_t       WIFI_ReceiveData(uint8_t socket, uint8_t *pdata, uint16_t Reqlen, uint16_t *RcvDatalen, uint32_t Timeout);

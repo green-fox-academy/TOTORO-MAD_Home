@@ -14,13 +14,13 @@
 /* Private variables --------------------------------------------------------*/
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
-uint8_t broadcast_ip[] = {255, 255, 255, 255};
+uint8_t ip[] = {10, 27, 99, 161};
+uint8_t firm_ip[] = {10, 27, 99, 161};
 int32_t socket;
 uint16_t datalen;
 uint8_t conn_flag;
 char command;
 extern ES_WIFIObject_t    EsWifiObj;
-extern ES_WIFI_Conn_t conn;
 
 /* Private function prototypes -----------------------------------------------*/
 void error_handling(const char *error_string, uint8_t error_code);
@@ -29,7 +29,12 @@ void send_ps_command()
 {
     /*Initialize  WIFI */
     wifi_init();
+	char revision[1000];
+	WIFI_GetModuleFwRevision(revision);
+	printf("%s\n", revision);
     while (1) {
+
+
     	/*Waiting for connection with WIFI AP */
     	printf("> Trying to connect to %s.\n", SSID);
         while (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK);
@@ -46,20 +51,16 @@ void send_ps_command()
 			error_handling("> ERROR : es-wifi module CANNOT get IP address\n", WIFI_STATUS_ERROR);
 		}
     	/*do-while connected to WIFI AP(checking connection by pinging own IP Address) */
-
+		printf("%d", WIFI_ModuleFirmwareUpdate("http://10.27.99.161:80/ISM43362_M3G_L44_SPI_C3.5.2.3.bin"));
+		printf("cmdata  %s\n", EsWifiObj.CmdData);
 		do {
-			int8_t socket = 0;
+			int8_t socket;
 			printf("Start TCP Server...\n");
 			while(WIFI_StartServer(socket, WIFI_TCP_PROTOCOL, "asd", SERVER_PORT) == WIFI_STATUS_OK);
-			/*printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
-					conn.RemoteIP[0],
-					conn.RemoteIP[1],
-					conn.RemoteIP[2],
-					conn.RemoteIP[3]);*/
 			printf("----------------------------------------- \n");
 			printf("TCP Server Started \n");
 			printf("receiving data...\n");
-			/*Trying to connect to server and sending data when connected in every 10 seconds */
+			/*trying to connect to server and sending data when connected in every 10 seconds */
 			do {
 				if(datalen >0) {
 					if (command == '1') {
@@ -71,9 +72,9 @@ void send_ps_command()
 						printf("going down\n");
 					} else if (command == '2') {
 						ctrl_stop();
-						printf("STAPH!!\n");
+						printf("staph!!\n");
 					} else {
-						printf("Wrong command!\n");
+						printf("wrong command!\n");
 						printf("%d\n", command);
 					}
 					datalen = 0;
