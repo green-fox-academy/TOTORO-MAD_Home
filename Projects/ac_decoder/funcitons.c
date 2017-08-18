@@ -14,9 +14,9 @@ uint16_t correction(uint16_t diff)
 
 char filling_binary(uint16_t diff)
 {
-    if (diff < 500 && diff > 300)
+    if (diff < 550 && diff > 280)
         return '0';
-    else if (diff > 900 && diff < 1100)
+    else if (diff > 800 && diff < 1100)
         return '1';
     else
         return 'X';

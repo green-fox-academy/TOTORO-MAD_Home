@@ -8,7 +8,7 @@
 #define MULTIPLIER              1000
 #define EDGE_CORRECTION         40
 #define NUMBERS_IN_A_ROW        16
-#define VOLT_DIFF_THRESHOLD     2.5
+#define VOLT_DIFF_THRESHOLD     1.5
 #define BUFFER_SIZE             50
 #define NUMBER_OF_DATA          268
 
