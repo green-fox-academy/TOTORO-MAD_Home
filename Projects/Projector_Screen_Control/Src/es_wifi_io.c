@@ -181,14 +181,14 @@ int8_t SPI_WIFI_Init(void)
       return -1;
     }    
   }
-  
+
   if((Prompt[0] != 0x15) ||(Prompt[1] != 0x15) ||(Prompt[2] != '\r')||
        (Prompt[3] != '\n') ||(Prompt[4] != '>') ||(Prompt[5] != ' '))
   {
     WIFI_DISABLE_NSS(); 
     return -1;
   }    
-   
+
   WIFI_DISABLE_NSS(); 
   return 0;
 }

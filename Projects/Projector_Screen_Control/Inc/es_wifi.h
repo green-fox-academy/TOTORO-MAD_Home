@@ -276,6 +276,8 @@ ES_WIFI_Status_t  ES_WIFI_StopClientConnection(ES_WIFIObject_t *Obj, ES_WIFI_Con
 #if (ES_WIFI_USE_AWS == 1)
 ES_WIFI_Status_t  ES_WIFI_StartAWSClientConnection(ES_WIFIObject_t *Obj, ES_WIFI_AWS_Conn_t *conn);
 #endif
+ES_WIFI_Status_t es_wifi_create_server(ES_WIFIObject_t *Obj, ES_WIFI_Conn_t *conn);
+
 ES_WIFI_Status_t  ES_WIFI_StartServerSingleConn(ES_WIFIObject_t *Obj, ES_WIFI_Conn_t *conn);
 ES_WIFI_Status_t  ES_WIFI_StopServerSingleConn(ES_WIFIObject_t *Obj);
 ES_WIFI_Status_t  ES_WIFI_StartServerMultiConn(ES_WIFIObject_t *Obj, ES_WIFI_Conn_t *conn);

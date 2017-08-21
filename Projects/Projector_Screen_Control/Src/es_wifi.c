@@ -1448,6 +1448,88 @@ ES_WIFI_Status_t ES_WIFI_StartServerSingleConn(ES_WIFIObject_t *Obj, ES_WIFI_Con
 }
 
 /**
+  * @brief  Configure and Start a Server.
+  * @param  Obj: pointer to module handle
+  * @param  conn: pointer to the connection structure
+  * @retval Operation Status.
+  */
+ES_WIFI_Status_t es_wifi_create_server(ES_WIFIObject_t *Obj, ES_WIFI_Conn_t *conn)
+{
+  ES_WIFI_Status_t ret = ES_WIFI_STATUS_ERROR;
+  char *ptr;
+
+  sprintf((char*)Obj->CmdData,"PK=1,3000\r");
+  ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+  if(ret == ES_WIFI_STATUS_OK)
+  {
+    sprintf((char*)Obj->CmdData,"P0=%d\r", conn->Number);
+    ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+    if(ret == ES_WIFI_STATUS_OK)
+    {
+      sprintf((char*)Obj->CmdData,"P1=%d\r", conn->Type);
+      ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+      if(ret == ES_WIFI_STATUS_OK)
+      {
+        sprintf((char*)Obj->CmdData,"P2=%d\r", conn->LocalPort);
+        ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+        if(ret == ES_WIFI_STATUS_OK)
+        {
+          sprintf((char*)Obj->CmdData,"P5=11\r");
+          ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+
+          if(ret == ES_WIFI_STATUS_OK)
+          {
+#if (ES_WIFI_USE_UART == 1)
+            if(Obj->fops.IO_Receive(Obj->CmdData, 0, Obj->Timeout) > 0)
+            {
+              if(strstr((char *)Obj->CmdData, "Accepted"))
+              {
+                ptr = strtok((char *)Obj->CmdData + 2, " ");
+                ptr = strtok(NULL, " ");
+                ptr = strtok(NULL, " ");
+                ptr = strtok(NULL, ":");
+                ParseIP((char *)ptr, conn->RemoteIP);
+                ret = ES_WIFI_STATUS_OK;
+              }
+            }
+#else
+            do
+            {
+              sprintf((char*)Obj->CmdData,"MR\r");
+              ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+              if(ret == ES_WIFI_STATUS_OK)
+              {
+                if((strstr((char *)Obj->CmdData, "[SOMA]")) && (strstr((char *)Obj->CmdData, "[EOMA]")))
+                {
+                  if(strstr((char *)Obj->CmdData, "Accepted"))
+                  {
+                    ptr = strtok((char *)Obj->CmdData + 2, " ");
+                    ptr = strtok(NULL, " ");
+                    ptr = strtok(NULL, " ");
+                    ptr = strtok(NULL, ":");
+                    ParseIP((char *)ptr, conn->RemoteIP);
+                    ret = ES_WIFI_STATUS_OK;
+                    break;
+                  }
+                }
+              }
+              else
+              {
+                ret = ES_WIFI_STATUS_ERROR;
+                break;
+              }
+              Obj->fops.IO_Delay(1000);
+            } while (1);
+#endif
+          }
+        }
+      }
+    }
+  }
+  return ret;
+}
+
+/**
   * @brief  Stop a Server.
   * @param  Obj: pointer to module handle
   * @retval Operation Status.

@@ -348,6 +348,27 @@ WIFI_Status_t WIFI_CloseClientConnection(uint32_t socket)
   * @param  port : Remote port
   * @retval Operation status
   */
+WIFI_Status_t wifi_create_server(uint32_t socket, WIFI_Protocol_t protocol, const char* name, uint16_t port)
+{
+  WIFI_Status_t ret = WIFI_STATUS_ERROR;
+  ES_WIFI_Conn_t conn;
+  conn.Number = socket;
+  conn.LocalPort = port;
+  conn.Type = (protocol == WIFI_TCP_PROTOCOL)? ES_WIFI_TCP_CONNECTION : ES_WIFI_UDP_CONNECTION;
+  if(es_wifi_create_server(&EsWifiObj, &conn)== ES_WIFI_STATUS_OK)
+  {
+    ret = WIFI_STATUS_OK;
+  }
+  return ret;
+}
+
+/**
+  * @brief  Configure and start a Server
+  * @param  type : Connection type TCP/UDP
+  * @param  name : name of the connection
+  * @param  port : Remote port
+  * @retval Operation status
+  */
 WIFI_Status_t WIFI_StartServer(uint32_t socket, WIFI_Protocol_t protocol, const char* name, uint16_t port)
 {
   WIFI_Status_t ret = WIFI_STATUS_ERROR;

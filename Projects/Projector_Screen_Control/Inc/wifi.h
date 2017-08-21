@@ -151,7 +151,7 @@ WIFI_Status_t       WIFI_Connect(
                              const char* SSID, 
                              const char* Password,
                              WIFI_Ecn_t ecn);
-uint8_t 			WIFI_IsConnected(void);
+uint8_t 			wifi_isconnected(void);
 WIFI_Status_t       WIFI_GetIP_Address(uint8_t  *ipaddr);
 WIFI_Status_t       WIFI_GetMAC_Address(uint8_t  *mac);                             
                              
@@ -168,6 +168,8 @@ WIFI_Status_t       WIFI_Ping(uint8_t* ipaddr, uint16_t count, uint16_t interval
 WIFI_Status_t       WIFI_GetHostAddress( char* location, uint8_t* ipaddr);
 WIFI_Status_t       WIFI_OpenClientConnection(uint32_t socket, WIFI_Protocol_t type, const char* name, uint8_t* ipaddr, uint16_t port, uint16_t local_port);
 WIFI_Status_t       WIFI_CloseClientConnection(uint32_t socket);
+
+WIFI_Status_t 		wifi_create_server(uint32_t socket, WIFI_Protocol_t protocol, const char* name, uint16_t port);
 
 WIFI_Status_t       WIFI_StartServer(uint32_t socket, WIFI_Protocol_t type, const char* name, uint16_t port);
 WIFI_Status_t       WIFI_StopServer(uint32_t socket);
