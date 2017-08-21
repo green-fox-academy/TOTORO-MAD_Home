@@ -38,16 +38,16 @@ typedef struct
 #define WIFI_WRITE_TIMEOUT 		1000
 #define CONNECTION_TRIAL_MAX    10
 
-#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
-#define bcopy(b1,b2,len) (memmove((b2), (b1), (len)), (void) 0)
+#define PACKET_LENGHT			48
 #define NTP_TIMESTAMP_DELTA 2208988800ull
-#define ntohl(x) ((((x) & 0xff) << 24) | \
+#define NTOHL(x) ((((x) & 0xff) << 24) | \
                      (((x) & 0xff00) << 8) | \
                      (((x) & 0xff0000UL) >> 8) | \
                      (((x) & 0xff000000UL) >> 24))
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
+/* TCP client variables */
 uint8_t remote_ip[] = {10, 27, 99, 63};
 float tx_data[3];
 uint8_t mac_addr[6];
@@ -56,12 +56,13 @@ int8_t socket = 0;
 uint16_t datalen;
 uint8_t conn_flag;
 
-char* host_name = "europe.pool.ntp.org";	// NTP server host-name.
-uint8_t host_port = 123;					// NTP UDP port number.
+/* NTP server variables*/
+char* host_name = "europe.pool.ntp.org";
+uint8_t host_port = 123;
 uint8_t host_ip_addr[4];
-
-// Create and zero out the packet. All 48 bytes worth.
 ntp_packet packet = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+uint16_t ntp_datalen;
+int8_t ntp_socket = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 void error_handling(const char *error_string, uint8_t error_code);
@@ -70,29 +71,62 @@ void wifi_init();
 
 void get_time()
 {
+	/* Zero out the packet. All 48 bytes worth*/
 	memset(&packet, 0, sizeof(ntp_packet));
 
-	// Set the first byte's bits to 00,011,011 for li = 0,vn = 3,and mode = 3. The rest will be left set to zero.
-	*((char*)&packet + 0) = 0x1b; // Represents 27 in base 10 or 00011011 in base 2.
-	WIFI_GetHostAddress(host_name, host_ip_addr); // Convert URL to IP.
-	printf("> connecting to IP Address : %d.%d.%d.%d\n",
+	/* Set the first byte's bits to 00,011,011 for li = 0,vn = 3,and mode = 3. The rest will be left set to zero.
+	 * Represents 27 in base 10 or 00011011 in base 2.
+	 */
+	*((char*)&packet + 0) = 0x1b;
+
+	/* Convert URL to IP */
+	if (WIFI_GetHostAddress(host_name, host_ip_addr) == WIFI_STATUS_OK) {
+		printf("> connecting to IP Address : %d.%d.%d.%d\n",
 			host_ip_addr[0],
 			host_ip_addr[1],
 			host_ip_addr[2],
 			host_ip_addr[3]);
-	while (WIFI_OpenClientConnection(socket, WIFI_UDP_PROTOCOL, "UDP_CLIENT", host_ip_addr, host_port, 10) != WIFI_STATUS_OK);
+		if (WIFI_OpenClientConnection(ntp_socket, WIFI_UDP_PROTOCOL, "UDP_CLIENT", host_ip_addr, host_port, 10) == WIFI_STATUS_OK) {
+			printf("Client is connected, sending packet to server!");
 
-	WIFI_SendData(socket, (char*)&packet, sizeof(ntp_packet), &datalen, WIFI_WRITE_TIMEOUT);
+			if (WIFI_SendData(ntp_socket, (char*)&packet, sizeof(ntp_packet), &ntp_datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && ntp_datalen == PACKET_LENGHT) {
+				printf("Packet has been sent to server, waiting for packet to arrive back!");
 
-	WIFI_ReceiveData(socket, (char*)&packet, sizeof(ntp_packet), &datalen, WIFI_WRITE_TIMEOUT);
+				if(WIFI_ReceiveData(ntp_socket, (char*)&packet, sizeof(ntp_packet), &ntp_datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && ntp_datalen == PACKET_LENGHT) {
+					printf("Packet has been received from server!");
 
-	WIFI_CloseClientConnection(socket);
+					if (WIFI_CloseClientConnection(ntp_socket) == WIFI_STATUS_OK) {
+						printf("Client socket has been closed!");
+
+					} else {
+						error_handling("> ERROR : CANNOT close client socket\n", WIFI_STATUS_ERROR);
+					}
+				} else {
+					error_handling("> ERROR : CANNOT receive data from NTP server\n", WIFI_STATUS_ERROR);
+					if (ntp_datalen < PACKET_LENGHT)
+						printf("Received bytes are (%d) less than %d, data has been lost", ntp_datalen, PACKET_LENGHT);
+				}
+			} else {
+				error_handling("> ERROR : CANNOT send data to NTP server\n", WIFI_STATUS_ERROR);
+				if (ntp_datalen < PACKET_LENGHT)
+					printf("Sent bytes are (%d) less than %d, data has been lost", ntp_datalen, PACKET_LENGHT);
+			}
+		} else {
+			error_handling("> ERROR : CANNOT connect to NTP server\n", WIFI_STATUS_ERROR);
+		}
+	} else {
+		error_handling("> ERROR : CANNOT get NTP server IP address\n", WIFI_STATUS_ERROR);
+	}
+
+
+
+
 
 	// These two fields contain the time-stamp seconds as the packet left the NTP server.
    // The number of seconds correspond to the seconds passed since 1900.
-   // ntohl() converts the bit/byte order from the network's to host's "endianness".
-   packet.txTm_s = ntohl(packet.txTm_s); // Time-stamp seconds.
-   packet.txTm_f = ntohl(packet.txTm_f); // Time-stamp fraction of a second.
+   // NTOHL() converts the bit/byte order from the network's to host's "endianness".
+   packet.txTm_s = NTOHL(packet.txTm_s); // Time-stamp seconds.
+   packet.txTm_f = NTOHL(packet.txTm_f); // Time-stamp fraction of a second.
 
    // Extract the 32 bits that represent the time-stamp seconds (since NTP epoch) from when the packet left the server.
    // Subtract 70 years worth of seconds from the seconds since 1900.
@@ -127,7 +161,7 @@ void send_sensor_data()
 
 		get_time();
 
-    	/*do-while connected to WIFI AP(checking connection by pinging own IP Address) */
+    	/*checking connection with WIFI AP */
 		do {
 			printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
 					remote_ip[0],
