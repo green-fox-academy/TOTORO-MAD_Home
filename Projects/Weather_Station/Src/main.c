@@ -88,7 +88,10 @@ typedef struct
 #define NTP_TIMESTAMP_DELTA 2208988800ull
 #define __HAL_RTC_RESET_HANDLE_STATE(__HANDLE__) ((__HANDLE__)->State = HAL_RTC_STATE_RESET)
 
-
+#define PP_HTONL(x) ((((x) & 0xff) << 24) | \
+                     (((x) & 0xff00) << 8) | \
+                     (((x) & 0xff0000UL) >> 8) | \
+                     (((x) & 0xff000000UL) >> 24))
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
 #if defined (TERMINAL_USE)
@@ -204,11 +207,11 @@ int main(void)
 	  RTC_TimeStampConfig();
 
 
-	/*while(1){
-	   // ##-3- Display the updated Time and Date ################################
-	    RTC_CalendarShow();
-	    //HAL_Delay(1000);
-	}*/
+//	while(1){
+//	   // ##-3- Display the updated Time and Date ################################
+//	    RTC_CalendarShow();
+//	    //HAL_Delay(1000);
+//	}
 
 
 /*Initialize  WIFI module */
@@ -281,8 +284,8 @@ int main(void)
 					//RTC_TimeStampConfig(); atadni parameterkent a idot es datumot
 					//aShowTime[50] es  aShowDate[50]  beletenni rx_data[] tombbe
 				}
-					packet.txTm_s = ntohl(packet.txTm_s); // Time-stamp seconds.
-					packet.txTm_f = ntohl(packet.txTm_f); // Time-stamp fraction of a second.
+					packet.txTm_s = PP_HTONL(packet.txTm_s); // Time-stamp seconds.
+					packet.txTm_f = PP_HTONL(packet.txTm_f); // Time-stamp fraction of a second.
 
 
 					time_t   txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA);

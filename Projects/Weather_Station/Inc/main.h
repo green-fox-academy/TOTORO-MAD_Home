@@ -52,13 +52,7 @@
 #include "wifi.h"
 #include "stm32l4xx_hal_rtc.h"
 #include "stm32l4xx_it.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdint.h>
-#include "def.h"
+
 
 /* Defines related to Clock configuration */
 /* Uncomment to enable the adaquate Clock Source */
