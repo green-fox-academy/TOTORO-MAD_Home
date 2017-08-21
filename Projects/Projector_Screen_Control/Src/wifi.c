@@ -140,7 +140,7 @@ WIFI_Status_t WIFI_Connect(
   * @brief  Check whether the module is connected to an access point.
   * @retval Operation Status.
   */
-uint8_t WIFI_IsConnected(void)
+uint8_t wifi_isconnected(void)
 {
 	return ES_WIFI_IsConnected(&EsWifiObj);
 }
