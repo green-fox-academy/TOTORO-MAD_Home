@@ -55,6 +55,10 @@
 #include "wifi.h"
 #include "wifi_conn.h"
 
+/* FatFs includes component */
+#include "ff_gen_drv.h"
+#include "sd_diskio.h"
+
 #include <stdio.h>
 
 
