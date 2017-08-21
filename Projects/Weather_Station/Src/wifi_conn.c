@@ -70,10 +70,6 @@ void wifi_init();
 
 void get_time()
 {
-	   time_t   txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA);
-
-	   // Print the time we got from the server,accounting for local timezone and conversion from UTC time.
-	   printf("Time: %s",ctime((const time_t*)&txTm));
 	memset(&packet, 0, sizeof(ntp_packet));
 
 	// Set the first byte's bits to 00,011,011 for li = 0,vn = 3,and mode = 3. The rest will be left set to zero.
@@ -102,7 +98,7 @@ void get_time()
    // Subtract 70 years worth of seconds from the seconds since 1900.
    // This leaves the seconds since the UNIX epoch of 1970.
    // (1900)------------------(1970)**************************************(Time Packet Left the Server)
-   txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA);
+   time_t   txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA);
 
    // Print the time we got from the server,accounting for local timezone and conversion from UTC time.
    printf("Time: %s",ctime((const time_t*)&txTm));

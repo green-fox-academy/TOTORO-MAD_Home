@@ -34,6 +34,7 @@
   *
   ******************************************************************************
   */
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
@@ -89,7 +90,7 @@ int main(void) {
 	/* Configure UART */
 	uart_init();
 
-	rtc_init();
+	//rtc_init();
 
 	/* Sending sensor data through WIFI connection to HQ device*/
 	send_sensor_data();
@@ -211,7 +212,7 @@ void rtc_init()
 	      - OutPutType     = Open Drain */
 	  __HAL_RTC_RESET_HANDLE_STATE(&RtcHandle);
 	  RtcHandle.Instance = RTC;
-	  RtcHandle.Init.HourFormat     = RTC_HOURFORMAT_24;
+	  RtcHandle.Init.HourFormat     = RTC_HOURFORMAT_12;
 	  RtcHandle.Init.AsynchPrediv   = RTC_ASYNCH_PREDIV;
 	  RtcHandle.Init.SynchPrediv    = RTC_SYNCH_PREDIV;
 	  RtcHandle.Init.OutPut         = RTC_OUTPUT_DISABLE;
@@ -228,11 +229,11 @@ void rtc_init()
 	  RTC_TimeStampConfig();
 
 	  /* Infinite loop */
-//	  while (1)
-//	  {
-//	    /*##-3- Display the updated Time and Date ################################*/
-//	    RTC_CalendarShow();
-//	  }
+	  while (1)
+	  {
+	    /*##-3- Display the updated Time and Date ################################*/
+	    RTC_CalendarShow();
+	  }
 }
 
 /**
