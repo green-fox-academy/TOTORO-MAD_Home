@@ -39,23 +39,45 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
-/* Defines -------------------------------------------------------------------*/
-/* #define USE_LPS22HB_TEMP */
-
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal.h"
+
+/* IOT includes component */
 #include "stm32l475e_iot01.h"
+
+/* Sensor includes component */
 #include "stm32l475e_iot01_tsensor.h"
 #include "stm32l475e_iot01_psensor.h"
 #include "stm32l475e_iot01_hsensor.h"
 #include "sensors.h"
+
+/* WIFI includes component */
 #include "wifi.h"
 #include "wifi_conn.h"
+
+#include <stdio.h>
+
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
+/* Defines related to Clock configuration */
+/* Uncomment to enable the adaquate Clock Source */
+#define RTC_CLOCK_SOURCE_LSI
+/*#define RTC_CLOCK_SOURCE_LSE*/
+
+#ifdef RTC_CLOCK_SOURCE_LSI
+#define RTC_ASYNCH_PREDIV    0x7F
+#define RTC_SYNCH_PREDIV     0xF9
+#endif
+
+#ifdef RTC_CLOCK_SOURCE_LSE
+#define RTC_ASYNCH_PREDIV  0x7F
+#define RTC_SYNCH_PREDIV   0x00FF
+#endif
+
 /* Exported functions ------------------------------------------------------- */
+void Error_Handler(void);
 #endif /* __MAIN_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
