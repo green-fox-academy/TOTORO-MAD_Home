@@ -137,6 +137,15 @@ WIFI_Status_t WIFI_Connect(
 }
 
 /**
+  * @brief  Check whether the module is connected to an access point.
+  * @retval Operation Status.
+  */
+uint8_t WIFI_IsConnected(void)
+{
+	return ES_WIFI_IsConnected(&EsWifiObj);
+}
+
+/**
   * @brief  This function retrieves the WiFi interface's MAC address.
   * @retval Operation Status.
   */

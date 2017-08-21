@@ -151,6 +151,7 @@ WIFI_Status_t       WIFI_Connect(
                              const char* SSID, 
                              const char* Password,
                              WIFI_Ecn_t ecn);
+uint8_t 			WIFI_IsConnected(void);
 WIFI_Status_t       WIFI_GetIP_Address(uint8_t  *ipaddr);
 WIFI_Status_t       WIFI_GetMAC_Address(uint8_t  *mac);                             
                              
