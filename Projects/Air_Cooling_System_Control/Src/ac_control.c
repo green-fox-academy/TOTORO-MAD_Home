@@ -305,18 +305,77 @@ const uint16_t onoff[] = {4709, 2620, 367, 408, 326, 982, 367, 982, 326, 408, 36
 		367, 408, 326, 408, 367, 408, 326, 408, 326, 449, 326, 408, 326, 408, 367, 408,
 		326, 408, 367, 408, 326, 408, 367, 408, 326, 408, 326, 408, 367, 408, 326, 408,
 		367, 408, 326, 408, 367, 408, 326, 408, 367, 408, 326, 408, 326, 20151, 4668, 15318};
+
 /* PWM variables */
 extern TIM_HandleTypeDef tim_pwm_handle;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
-void send_signal(uint16_t *array)
+void send_signal(const uint16_t *array)
 {
 	for (int i = 0; i < COMMAND_SIZE; i=i+2) {
 		HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
 		delay(array[i]);
 		HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
 		delay(array[(i+1)]);
+	}
+}
+
+void set_ac(uint8_t command)
+{
+	switch (command) {
+	case 16:
+		printf("16 signal start\n");
+		send_signal(degree_16);
+		printf("16 signal stop\n");
+	    break;
+	case 17:
+		send_signal(degree_17);
+	    break;
+	case 18:
+		send_signal(degree_18);
+	    break;
+	case 19:
+		send_signal(degree_19);
+		break;
+	case 20:
+		send_signal(degree_20);
+	    break;
+	case 21:
+		send_signal(degree_21);
+	    break;
+	case 22:
+		send_signal(degree_22);
+	    break;
+	case 23:
+		send_signal(degree_23);
+	    break;
+	case 24:
+		send_signal(degree_24);
+	    break;
+	case 25:
+		send_signal(degree_25);
+	    break;
+	case 26:
+		send_signal(degree_26);
+	    break;
+	case 27:
+		send_signal(degree_27);
+	    break;
+	case 28:
+		send_signal(degree_28);
+	    break;
+	case 29:
+		send_signal(degree_29);
+	    break;
+	case 30:
+		send_signal(degree_30);
+	    break;
+	case 31:
+		send_signal(onoff);
+	    break;
+	default:
+	    break;
 	}
 }
 

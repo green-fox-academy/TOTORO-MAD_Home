@@ -77,6 +77,11 @@ WIFI_Status_t WIFI_Init(void)
   return ret;
 }
 
+uint8_t wifi_isconnected(void)
+{
+	return ES_WIFI_IsConnected(&EsWifiObj);
+}
+
 /**
   * @brief  List a defined number of vailable access points
   * @param  APs : pointer to APs structure
