@@ -8,7 +8,8 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-void ac_ctrl();
+void send_signal();
+void set_ac(uint8 command);
 
 #endif /* __PS_CONTROL_H */
 

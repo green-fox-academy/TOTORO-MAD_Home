@@ -148,14 +148,19 @@ int main(void) {
 	while (1) {
 		if (socket != -1) {
 			do {
-				printf("waiting for data\n");
-				if(WIFI_ReceiveData(socket, &rx_data, sizeof(rx_data), &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
-					printf("disconnected from server\n");
-					WIFI_CloseClientConnection(socket);
-					socket = -1;
+				if (datalen > 0) {
+
+					printf("waiting for data\n");
+					if(WIFI_ReceiveData(socket, &rx_data, sizeof(rx_data), &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
+						printf("disconnected from server\n");
+						WIFI_CloseClientConnection(socket);
+						socket = -1;
+						break;
+					}
 				}
+
 				//HAL_Delay(10000);
-			} while (datalen > 0);
+			} while (WIFI_ReceiveData(socket, &rx_data, sizeof(rx_data), &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK);
 		} else {
 			printf("trying to reconnect\n");
 			if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 0) == WIFI_STATUS_OK) {
