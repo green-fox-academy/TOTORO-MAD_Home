@@ -145,6 +145,10 @@ uint8_t wifi_isconnected(void)
 	return ES_WIFI_IsConnected(&EsWifiObj);
 }
 
+WIFI_Status_t wifi_waitapstatechange(void)
+{
+	return ES_WIFI_WaitAPStateChange(&EsWifiObj);
+}
 /**
   * @brief  This function retrieves the WiFi interface's MAC address.
   * @retval Operation Status.

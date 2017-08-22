@@ -78,6 +78,7 @@
 
 /* Exported functions ------------------------------------------------------- */
 void Error_Handler(void);
+void rtc_init();
 #endif /* __MAIN_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

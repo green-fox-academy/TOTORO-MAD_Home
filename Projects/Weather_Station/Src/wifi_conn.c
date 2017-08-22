@@ -2,8 +2,8 @@
 #include "wifi_conn.h"
 
 /* Private typedef -----------------------------------------------------------*/
-// Structure that defines the 48 char NTP packet protocol.
-// Check TWICE size of fields !!
+/* Structure that defines the 48 char NTP packet protocol.
+ *  Check TWICE size of fields !!*/
 typedef struct
 {
   unsigned char li   : 2;          // Only two bits. Leap indicator.
@@ -31,6 +31,7 @@ typedef struct
   uint32_t txTm_f;           // 32 bits. Transmit time-stamp fraction of a second.
 }ntp_packet;                         // Total: 384 bits or 48 chars.
 
+/*Time structure */
 typedef struct tm {
    int tm_sec;         /* seconds,  range 0 to 59          */
    int tm_min;         /* minutes, range 0 to 59           */
@@ -43,31 +44,46 @@ typedef struct tm {
    int tm_isdst;       /* daylight saving time             */
 }rtc_time;
 
+/*Structure for sending data to HQ */
+typedef struct hq_data {
+	float sensor_values[3];	// Storing Temperature, Humidity and Pressure values
+	rtc_time hq_time;
+}hq_data_t;
+
 /* Private define ------------------------------------------------------------*/
-#define SSID     				"A66 Guest"
-#define PASSWORD 				"Hello123"
+/* WIFI connection data */
+#define SSID     				"HUAWEI-B206"
+#define PASSWORD 				"47213979"
+
+/*TCP client definitions */
 #define SERVER_PORT 			8005
 #define WIFI_WRITE_TIMEOUT 		1000
-#define CONNECTION_TRIAL_MAX    10
-
-#define PACKET_LENGHT			48
-#define NTP_TIMESTAMP_DELTA 	2208988800ull
+#define YEAR_CORR				100
+#define MONTH_CORR				1
+#define WEEKDAY_CORR			3
+/* NTP server definitions*/
+#define PACKET_LENGHT			48								//NTP packet lengths in bytes
+#define NTP_TIMESTAMP_DELTA 	2208988800ull					//70 years in seconds
 #define NTOHL(x) 				((((x) & 0xff) << 24) | \
                      	 	 	(((x) & 0xff00) << 8) | \
 								(((x) & 0xff0000UL) >> 8) | \
-								(((x) & 0xff000000UL) >> 24))
-#define UTC_PLUS_2				7200 							//Addition of 2 hours for local time
+								(((x) & 0xff000000UL) >> 24))	//Converting network byte order to host byte order
+#define UTC_PLUS_2				7200 							//Addition of 2 hours for local time in seconds
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
 /* TCP client variables */
-uint8_t remote_ip[] = {10, 27, 99, 63};
-float tx_data[3];
+uint8_t remote_ip[] = {192, 168, 8, 101};
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
 int8_t socket = 0;
 uint16_t datalen;
 uint8_t conn_flag;
+hq_data_t hq_data;
+/*  */
+extern RTC_HandleTypeDef RtcHandle;
+RTC_DateTypeDef datestructureget;
+RTC_TimeTypeDef timestructureget;
 
 /* NTP server variables*/
 char* host_name = "europe.pool.ntp.org";
@@ -78,9 +94,10 @@ uint16_t ntp_datalen;
 int8_t ntp_socket = 0;
 extern rtc_time *rtc_data;
 
+
 /* Private function prototypes -----------------------------------------------*/
 void error_handling(const char *error_string, uint8_t error_code);
-void wifi_init();
+
 /* Private functions ---------------------------------------------------------*/
 
 void get_time()
@@ -93,7 +110,7 @@ void get_time()
 	 */
 	*((char*)&packet + 0) = 0x1b;
 
-	/*Checks if packet contains passed secs*/
+	/*Checks if packet contains passed seconds*/
 	while (packet.txTm_s == 0) {
 		/* Convert URL to IP */
 		if (WIFI_GetHostAddress(host_name, host_ip_addr) == WIFI_STATUS_OK) {
@@ -144,25 +161,41 @@ void get_time()
    /* Extract the 32 bits that represent the time-stamp seconds (since NTP epoch) from when the packet left the server.
     * Subtract 70 years worth of seconds from the seconds since 1900.
     * This leaves the seconds since the UNIX epoch of 1970.
-    * (1900)------------------(1970)**************************************(Time Packet Left the Server) */
+    * (1900)------------------(1970)**************************************(Time Packet Left the Server)
+    * Plus 2 hours to get Budapest local time */
    time_t txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA + UTC_PLUS_2);
 
-   /*Print the time we got from the server,accounting for local timezone and conversion from UTC time. */
-   printf("Time: %s\n",ctime((const time_t*)&txTm));
+   /* Load time data to structure for RTC initialization */
    rtc_data = gmtime((const time_t*)&txTm);
+
+   /* RTC initialization */
    rtc_init();
 }
 void send_sensor_data()
 {
-    /*Initialize  WIFI */
-    wifi_init();
-
     while (1) {
+        /*Initialize  WIFI module */
+    	if(WIFI_Init() ==  WIFI_STATUS_OK) {
+            printf("> WIFI Module Initialized.\n");
+    	} else {
+    	    error_handling("> ERROR : WIFI Module cannot be initialized.\n", WIFI_STATUS_ERROR);
+    	}
+    	/*Getting MAC address */
+        if(WIFI_GetMAC_Address(mac_addr) == WIFI_STATUS_OK) {
+            printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
+                   mac_addr[0],
+                   mac_addr[1],
+                   mac_addr[2],
+                   mac_addr[3],
+                   mac_addr[4],
+                   mac_addr[5]);
+        } else {
+            error_handling("> ERROR : CANNOT get MAC address\n", WIFI_STATUS_ERROR);
+        }
     	/*Waiting for connection with WIFI AP */
     	printf("> Trying to connect to %s.\n", SSID);
         while (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK);
-		printf("> Connected to %s!\n", SSID);
-
+		printf("> Connected to %s! %d\n", SSID, wifi_isconnected());
     	/*Getting IP Address */
 		if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
 			printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
@@ -173,7 +206,7 @@ void send_sensor_data()
 		} else {
 			error_handling("> ERROR : es-wifi module CANNOT get IP address\n", WIFI_STATUS_ERROR);
 		}
-
+		/*Getting online time for TimeStamp*/
 		get_time();
 
     	/*checking connection with WIFI AP */
@@ -185,23 +218,61 @@ void send_sensor_data()
 					remote_ip[3],
 					SERVER_PORT);
 	    	/*Creating socket and connecting to HQ server */
+			socket = 0;
 			while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 10) != WIFI_STATUS_OK);
 
-		    	/*Loading sensor data into buffer */
-				tx_data[0] = get_temperature();
-				tx_data[1] = get_humidity();
-				tx_data[2] = get_pressure();
+				/* Get the RTC current Time */
+				HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
+				/* Get the RTC current Date */
+				HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
+
+				/*Loading time data into buffer for first send*/
+				hq_data.hq_time.tm_hour = timestructureget.Hours;
+				hq_data.hq_time.tm_min = timestructureget.Minutes;
+				hq_data.hq_time.tm_sec = timestructureget.Seconds;
+				hq_data.hq_time.tm_isdst = timestructureget.DayLightSaving;
+				hq_data.hq_time.tm_year = datestructureget.Year + YEAR_CORR;
+				hq_data.hq_time.tm_mon = datestructureget.Month - MONTH_CORR;
+				hq_data.hq_time.tm_mday = datestructureget.Date;
+				hq_data.hq_time.tm_wday = datestructureget.WeekDay + WEEKDAY_CORR;
+
+
+				/*Loading sensor data into buffer for first send*/
+				hq_data.sensor_values[0] = get_temperature();
+				hq_data.sensor_values[1] = get_humidity();
+				hq_data.sensor_values[2] = get_pressure();
+
 				conn_flag = 0;
 
 		    	/*Sending data when connected in every 10 seconds */
-				while (WIFI_SendData(socket, (uint8_t*)tx_data, sizeof(tx_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK) {
-					tx_data[0] = get_temperature();
-					tx_data[1] = get_humidity();
-					tx_data[2] = get_pressure();
+				while (WIFI_SendData(socket, &hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK) {
+					/* Get the RTC current Time */
+					HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
+					/* Get the RTC current Date */
+					HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
+
+					/*Loading time data into buffer */
+					hq_data.hq_time.tm_hour = timestructureget.Hours;
+					hq_data.hq_time.tm_min = timestructureget.Minutes;
+					hq_data.hq_time.tm_sec = timestructureget.Seconds;
+					hq_data.hq_time.tm_isdst = timestructureget.DayLightSaving;
+					hq_data.hq_time.tm_year = datestructureget.Year + YEAR_CORR;
+					hq_data.hq_time.tm_mon = datestructureget.Month - MONTH_CORR;
+					hq_data.hq_time.tm_mday = datestructureget.Date;
+					hq_data.hq_time.tm_wday = datestructureget.WeekDay + WEEKDAY_CORR;
+
+					time_t time = mktime(&(hq_data.hq_time));
+					printf("TimeStamp: %s\n",ctime((const time_t*)&time));
+
+					/*Loading sensor data into buffer */
+					hq_data.sensor_values[0] = get_temperature();
+					hq_data.sensor_values[1] = get_humidity();
+					hq_data.sensor_values[2] = get_pressure();
+
 					conn_flag = 1;
+
 					HAL_Delay(10000);
 				}
-
 		    	/*When connection is lost conn_flag equals 1, else client could'not send data to server, timeout happens*/
 				if (conn_flag == 1) {
 					printf("> Disconnected from server!\n");
@@ -210,32 +281,10 @@ void send_sensor_data()
 				}
 			/*Closing socket when connection is lost or could'not connect */
 			WIFI_CloseClientConnection(socket);
-		} while (wifi_isconnected() == 1);	//do-while
+		} while (wifi_waitapstatechange() == 2);	//do-while
 		printf("> Disconnected from WIFI!\n");
     }	//while (1)
 }	//main
-
-void wifi_init()
-{
-    /*Initialize  WIFI module */
-	if(WIFI_Init() ==  WIFI_STATUS_OK) {
-        printf("> WIFI Module Initialized.\n");
-	} else {
-	    error_handling("> ERROR : WIFI Module cannot be initialized.\n", WIFI_STATUS_ERROR);
-	}
-	/*Getting MAC address */
-    if(WIFI_GetMAC_Address(mac_addr) == WIFI_STATUS_OK) {
-        printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
-               mac_addr[0],
-               mac_addr[1],
-               mac_addr[2],
-               mac_addr[3],
-               mac_addr[4],
-               mac_addr[5]);
-    } else {
-        error_handling("> ERROR : CANNOT get MAC address\n", WIFI_STATUS_ERROR);
-    }
-}
 
 void error_handling(const char *error_string, uint8_t error_code)
 {
