@@ -39,6 +39,18 @@
 #include "main.h"
 
 /* Private typedef -----------------------------------------------------------*/
+typedef struct tm {
+   int tm_sec;         /* seconds,  range 0 to 59          */
+   int tm_min;         /* minutes, range 0 to 59           */
+   int tm_hour;        /* hours, range 0 to 23             */
+   int tm_mday;        /* day of the month, range 1 to 31  */
+   int tm_mon;         /* month, range 0 to 11             */
+   int tm_year;        /* The number of years since 1900   */
+   int tm_wday;        /* day of the week, range 0 to 6    */
+   int tm_yday;        /* day in the year, range 0 to 365  */
+   int tm_isdst;       /* daylight saving time             */
+}rtc_time;
+
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
@@ -47,6 +59,7 @@ UART_HandleTypeDef hDiscoUart;
 
 /* RTC handler declaration */
 RTC_HandleTypeDef RtcHandle;
+rtc_time *rtc_data;
 
 /* Buffers used for displaying Time and Date */
 uint8_t aShowTime[50] = {0}, aShowTimeStamp[50] = {0};
@@ -212,7 +225,7 @@ void rtc_init()
 	      - OutPutType     = Open Drain */
 	  __HAL_RTC_RESET_HANDLE_STATE(&RtcHandle);
 	  RtcHandle.Instance = RTC;
-	  RtcHandle.Init.HourFormat     = RTC_HOURFORMAT_12;
+	  RtcHandle.Init.HourFormat     = RTC_HOURFORMAT_24;
 	  RtcHandle.Init.AsynchPrediv   = RTC_ASYNCH_PREDIV;
 	  RtcHandle.Init.SynchPrediv    = RTC_SYNCH_PREDIV;
 	  RtcHandle.Init.OutPut         = RTC_OUTPUT_DISABLE;
@@ -229,11 +242,11 @@ void rtc_init()
 	  RTC_TimeStampConfig();
 
 	  /* Infinite loop */
-	  while (1)
-	  {
-	    /*##-3- Display the updated Time and Date ################################*/
+//	  while (1)
+//	  {
+//	    /*##-3- Display the updated Time and Date ################################*/
 	    RTC_CalendarShow();
-	  }
+//	  }
 }
 
 /**
@@ -252,12 +265,12 @@ static void RTC_TimeStampConfig(void)
 
   /*##-2- Configure the Date #################################################*/
   /* Set Date: Monday April 14th 2014 */
-  sdatestructure.Year    = 0x14;
-  sdatestructure.Month   = RTC_MONTH_APRIL;
-  sdatestructure.Date    = 0x14;
-  sdatestructure.WeekDay = RTC_WEEKDAY_MONDAY;
+  sdatestructure.Year    = rtc_data->tm_year - 100;	//correct year by -100
+  sdatestructure.Month   = rtc_data->tm_mon + 1; 	//correct month by 1
+  sdatestructure.Date    = rtc_data->tm_mday;
+  sdatestructure.WeekDay = rtc_data->tm_wday;
 
-  if(HAL_RTC_SetDate(&RtcHandle,&sdatestructure,RTC_FORMAT_BCD) != HAL_OK)
+  if(HAL_RTC_SetDate(&RtcHandle,&sdatestructure,RTC_FORMAT_BIN) != HAL_OK)
   {
     /* Initialization Error */
     Error_Handler();
@@ -265,15 +278,15 @@ static void RTC_TimeStampConfig(void)
 
   /*##-3- Configure the Time #################################################*/
   /* Set Time: 08:10:00 */
-  stimestructure.Hours          = 0x08;
-  stimestructure.Minutes        = 0x10;
-  stimestructure.Seconds        = 0x00;
-  stimestructure.SubSeconds     = 0x00;
+  stimestructure.Hours          = rtc_data->tm_hour;
+  stimestructure.Minutes        = rtc_data->tm_min;
+  stimestructure.Seconds        = rtc_data->tm_sec;
+  stimestructure.SubSeconds     = 0;
   stimestructure.TimeFormat     = RTC_HOURFORMAT12_AM;
   stimestructure.DayLightSaving = RTC_DAYLIGHTSAVING_NONE ;
   stimestructure.StoreOperation = RTC_STOREOPERATION_RESET;
 
-  if(HAL_RTC_SetTime(&RtcHandle,&stimestructure,RTC_FORMAT_BCD) != HAL_OK)
+  if(HAL_RTC_SetTime(&RtcHandle,&stimestructure,RTC_FORMAT_BIN) != HAL_OK)
   {
     /* Initialization Error */
     Error_Handler();

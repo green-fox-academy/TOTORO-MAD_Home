@@ -31,6 +31,18 @@ typedef struct
   uint32_t txTm_f;           // 32 bits. Transmit time-stamp fraction of a second.
 }ntp_packet;                         // Total: 384 bits or 48 chars.
 
+typedef struct tm {
+   int tm_sec;         /* seconds,  range 0 to 59          */
+   int tm_min;         /* minutes, range 0 to 59           */
+   int tm_hour;        /* hours, range 0 to 23             */
+   int tm_mday;        /* day of the month, range 1 to 31  */
+   int tm_mon;         /* month, range 0 to 11             */
+   int tm_year;        /* The number of years since 1900   */
+   int tm_wday;        /* day of the week, range 0 to 6    */
+   int tm_yday;        /* day in the year, range 0 to 365  */
+   int tm_isdst;       /* daylight saving time             */
+}rtc_time;
+
 /* Private define ------------------------------------------------------------*/
 #define SSID     				"A66 Guest"
 #define PASSWORD 				"Hello123"
@@ -39,11 +51,12 @@ typedef struct
 #define CONNECTION_TRIAL_MAX    10
 
 #define PACKET_LENGHT			48
-#define NTP_TIMESTAMP_DELTA 2208988800ull
-#define NTOHL(x) ((((x) & 0xff) << 24) | \
-                     (((x) & 0xff00) << 8) | \
-                     (((x) & 0xff0000UL) >> 8) | \
-                     (((x) & 0xff000000UL) >> 24))
+#define NTP_TIMESTAMP_DELTA 	2208988800ull
+#define NTOHL(x) 				((((x) & 0xff) << 24) | \
+                     	 	 	(((x) & 0xff00) << 8) | \
+								(((x) & 0xff0000UL) >> 8) | \
+								(((x) & 0xff000000UL) >> 24))
+#define UTC_PLUS_2				7200 							//Addition of 2 hours for local time
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
@@ -63,6 +76,7 @@ uint8_t host_ip_addr[4];
 ntp_packet packet = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 uint16_t ntp_datalen;
 int8_t ntp_socket = 0;
+extern rtc_time *rtc_data;
 
 /* Private function prototypes -----------------------------------------------*/
 void error_handling(const char *error_string, uint8_t error_code);
@@ -79,63 +93,64 @@ void get_time()
 	 */
 	*((char*)&packet + 0) = 0x1b;
 
-	/* Convert URL to IP */
-	if (WIFI_GetHostAddress(host_name, host_ip_addr) == WIFI_STATUS_OK) {
-		printf("> connecting to IP Address : %d.%d.%d.%d\n",
-			host_ip_addr[0],
-			host_ip_addr[1],
-			host_ip_addr[2],
-			host_ip_addr[3]);
-		if (WIFI_OpenClientConnection(ntp_socket, WIFI_UDP_PROTOCOL, "UDP_CLIENT", host_ip_addr, host_port, 10) == WIFI_STATUS_OK) {
-			printf("Client is connected, sending packet to server!");
+	/*Checks if packet contains passed secs*/
+	while (packet.txTm_s == 0) {
+		/* Convert URL to IP */
+		if (WIFI_GetHostAddress(host_name, host_ip_addr) == WIFI_STATUS_OK) {
+			printf("> connecting to IP Address : %d.%d.%d.%d\n",
+				host_ip_addr[0],
+				host_ip_addr[1],
+				host_ip_addr[2],
+				host_ip_addr[3]);
 
-			if (WIFI_SendData(ntp_socket, (char*)&packet, sizeof(ntp_packet), &ntp_datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && ntp_datalen == PACKET_LENGHT) {
-				printf("Packet has been sent to server, waiting for packet to arrive back!");
+			if (WIFI_OpenClientConnection(ntp_socket, WIFI_UDP_PROTOCOL, "UDP_CLIENT", host_ip_addr, host_port, 10) == WIFI_STATUS_OK) {
+				printf("Client is connected, sending packet to server!\n");
 
-				if(WIFI_ReceiveData(ntp_socket, (char*)&packet, sizeof(ntp_packet), &ntp_datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && ntp_datalen == PACKET_LENGHT) {
-					printf("Packet has been received from server!");
+				if (WIFI_SendData(ntp_socket, (char*)&packet, sizeof(ntp_packet), &ntp_datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && ntp_datalen == PACKET_LENGHT) {
+					printf("Packet has been sent to server, waiting for packet to arrive back!\n");
 
-					if (WIFI_CloseClientConnection(ntp_socket) == WIFI_STATUS_OK) {
-						printf("Client socket has been closed!");
+					if(WIFI_ReceiveData(ntp_socket, (char*)&packet, sizeof(ntp_packet), &ntp_datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && ntp_datalen == PACKET_LENGHT) {
+						printf("Packet has been received from server!\n");
 
+						if (WIFI_CloseClientConnection(ntp_socket) == WIFI_STATUS_OK) {
+							printf("Client socket has been closed!\n");
+
+						} else {
+							error_handling("> ERROR : CANNOT close client socket\n", WIFI_STATUS_ERROR);
+						}
 					} else {
-						error_handling("> ERROR : CANNOT close client socket\n", WIFI_STATUS_ERROR);
+						error_handling("> ERROR : CANNOT receive data from NTP server\n", WIFI_STATUS_ERROR);
+						if (ntp_datalen < PACKET_LENGHT)
+							printf("Received bytes are (%d) less than %d, data has been lost\n", ntp_datalen, PACKET_LENGHT);
 					}
 				} else {
-					error_handling("> ERROR : CANNOT receive data from NTP server\n", WIFI_STATUS_ERROR);
+					error_handling("> ERROR : CANNOT send data to NTP server\n", WIFI_STATUS_ERROR);
 					if (ntp_datalen < PACKET_LENGHT)
-						printf("Received bytes are (%d) less than %d, data has been lost", ntp_datalen, PACKET_LENGHT);
+						printf("Sent bytes are (%d) less than %d, data has been lost!\n", ntp_datalen, PACKET_LENGHT);
 				}
 			} else {
-				error_handling("> ERROR : CANNOT send data to NTP server\n", WIFI_STATUS_ERROR);
-				if (ntp_datalen < PACKET_LENGHT)
-					printf("Sent bytes are (%d) less than %d, data has been lost", ntp_datalen, PACKET_LENGHT);
+				error_handling("> ERROR : CANNOT connect to NTP server\n", WIFI_STATUS_ERROR);
 			}
 		} else {
-			error_handling("> ERROR : CANNOT connect to NTP server\n", WIFI_STATUS_ERROR);
+			error_handling("> ERROR : CANNOT get NTP server IP address\n", WIFI_STATUS_ERROR);
 		}
-	} else {
-		error_handling("> ERROR : CANNOT get NTP server IP address\n", WIFI_STATUS_ERROR);
 	}
+	/* These two fields contain the time-stamp seconds as the packet left the NTP server.
+	 * The number of seconds correspond to the seconds passed since 1900 NTOHL() converts the bit/byte order from the network's to host's "endianness".
+	 */
+	packet.txTm_s = NTOHL(packet.txTm_s);
+	packet.txTm_f = NTOHL(packet.txTm_f);
 
+   /* Extract the 32 bits that represent the time-stamp seconds (since NTP epoch) from when the packet left the server.
+    * Subtract 70 years worth of seconds from the seconds since 1900.
+    * This leaves the seconds since the UNIX epoch of 1970.
+    * (1900)------------------(1970)**************************************(Time Packet Left the Server) */
+   time_t txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA + UTC_PLUS_2);
 
-
-
-
-	// These two fields contain the time-stamp seconds as the packet left the NTP server.
-   // The number of seconds correspond to the seconds passed since 1900.
-   // NTOHL() converts the bit/byte order from the network's to host's "endianness".
-   packet.txTm_s = NTOHL(packet.txTm_s); // Time-stamp seconds.
-   packet.txTm_f = NTOHL(packet.txTm_f); // Time-stamp fraction of a second.
-
-   // Extract the 32 bits that represent the time-stamp seconds (since NTP epoch) from when the packet left the server.
-   // Subtract 70 years worth of seconds from the seconds since 1900.
-   // This leaves the seconds since the UNIX epoch of 1970.
-   // (1900)------------------(1970)**************************************(Time Packet Left the Server)
-   time_t   txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA);
-
-   // Print the time we got from the server,accounting for local timezone and conversion from UTC time.
-   printf("Time: %s",ctime((const time_t*)&txTm));
+   /*Print the time we got from the server,accounting for local timezone and conversion from UTC time. */
+   printf("Time: %s\n",ctime((const time_t*)&txTm));
+   rtc_data = gmtime((const time_t*)&txTm);
+   rtc_init();
 }
 void send_sensor_data()
 {
@@ -169,7 +184,7 @@ void send_sensor_data()
 					remote_ip[2],
 					remote_ip[3],
 					SERVER_PORT);
-	    	/*Creating socket*/
+	    	/*Creating socket and connecting to HQ server */
 			while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 10) != WIFI_STATUS_OK);
 
 		    	/*Loading sensor data into buffer */
@@ -178,7 +193,7 @@ void send_sensor_data()
 				tx_data[2] = get_pressure();
 				conn_flag = 0;
 
-		    	/*Trying to connect to server and sending data when connected in every 10 seconds */
+		    	/*Sending data when connected in every 10 seconds */
 				while (WIFI_SendData(socket, (uint8_t*)tx_data, sizeof(tx_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK) {
 					tx_data[0] = get_temperature();
 					tx_data[1] = get_humidity();
@@ -187,7 +202,7 @@ void send_sensor_data()
 					HAL_Delay(10000);
 				}
 
-		    	/*When connection is lost conn_flag equals 1, else client could'not connect to server */
+		    	/*When connection is lost conn_flag equals 1, else client could'not send data to server, timeout happens*/
 				if (conn_flag == 1) {
 					printf("> Disconnected from server!\n");
 				} else {
@@ -196,9 +211,7 @@ void send_sensor_data()
 			/*Closing socket when connection is lost or could'not connect */
 			WIFI_CloseClientConnection(socket);
 		} while (wifi_isconnected() == 1);	//do-while
-		/*If there might be a problem with pinging, disconnect from WIFI AP anyway */
 		printf("> Disconnected from WIFI!\n");
-		WIFI_Disconnect();
     }	//while (1)
 }	//main
 
