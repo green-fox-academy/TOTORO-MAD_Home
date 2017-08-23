@@ -111,7 +111,7 @@ typedef enum {
   ES_WIFI_AP_NONE     = 0x00,   
   ES_WIFI_AP_ASSIGNED = 0x01, 
   ES_WIFI_AP_JOINED   = 0x02,  
-  ES_WIFI_AP_ERROR    = 0xFF,    
+  ES_WIFI_AP_ERROR    = 0x04,
 } ES_WIFI_APState_t;
 
 

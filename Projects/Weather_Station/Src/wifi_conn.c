@@ -57,7 +57,7 @@ typedef struct hq_data {
 
 /*TCP client definitions */
 #define SERVER_PORT 			8005
-#define WIFI_WRITE_TIMEOUT 		1000
+#define WIFI_WRITE_TIMEOUT 		100
 #define YEAR_CORR				100
 #define MONTH_CORR				1
 #define WEEKDAY_CORR			3
@@ -76,7 +76,7 @@ typedef struct hq_data {
 uint8_t remote_ip[] = {192, 168, 8, 101};
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
-int8_t socket = 0;
+int8_t socket = 1;
 uint16_t datalen;
 uint8_t conn_flag;
 hq_data_t hq_data;
@@ -177,112 +177,114 @@ void send_sensor_data()
         /*Initialize  WIFI module */
     	if(WIFI_Init() ==  WIFI_STATUS_OK) {
             printf("> WIFI Module Initialized.\n");
+
+			/*Getting MAC address */
+			if(WIFI_GetMAC_Address(mac_addr) == WIFI_STATUS_OK) {
+				printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
+					   mac_addr[0],
+					   mac_addr[1],
+					   mac_addr[2],
+					   mac_addr[3],
+					   mac_addr[4],
+					   mac_addr[5]);
+
+				/*Waiting for connection with WIFI AP */
+				printf("> Trying to connect to %s.\n", SSID);
+				while (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK);
+				/*Getting IP Address */
+				if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
+					printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
+							ip_addr[0],
+							ip_addr[1],
+							ip_addr[2],
+							ip_addr[3]);
+
+					/*Getting online time for TimeStamp*/
+					get_time();
+
+					/*checking connection with WIFI AP */
+					do {
+						printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
+								remote_ip[0],
+								remote_ip[1],
+								remote_ip[2],
+								remote_ip[3],
+								SERVER_PORT);
+						/*Creating socket and connecting to HQ server */
+						socket = 1;
+						while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 10) != WIFI_STATUS_OK);
+
+						/* Get the RTC current Time */
+						HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
+						/* Get the RTC current Date */
+						HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
+
+						/*Loading time data into buffer for first send*/
+						hq_data.hq_time.tm_hour = timestructureget.Hours;
+						hq_data.hq_time.tm_min = timestructureget.Minutes;
+						hq_data.hq_time.tm_sec = timestructureget.Seconds;
+						hq_data.hq_time.tm_isdst = timestructureget.DayLightSaving;
+						hq_data.hq_time.tm_year = datestructureget.Year + YEAR_CORR;
+						hq_data.hq_time.tm_mon = datestructureget.Month - MONTH_CORR;
+						hq_data.hq_time.tm_mday = datestructureget.Date;
+						hq_data.hq_time.tm_wday = datestructureget.WeekDay + WEEKDAY_CORR;
+
+
+						/*Loading sensor data into buffer for first send*/
+						hq_data.sensor_values[0] = get_temperature();
+						hq_data.sensor_values[1] = get_humidity();
+						hq_data.sensor_values[2] = get_pressure();
+
+						conn_flag = 0;
+
+						/*Sending data when connected in every 10 seconds */
+						while (WIFI_SendData(socket, &hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK) {
+							/* Get the RTC current Time */
+							HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
+							/* Get the RTC current Date */
+							HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
+
+							/*Loading time data into buffer */
+							hq_data.hq_time.tm_hour = timestructureget.Hours;
+							hq_data.hq_time.tm_min = timestructureget.Minutes;
+							hq_data.hq_time.tm_sec = timestructureget.Seconds;
+							hq_data.hq_time.tm_isdst = timestructureget.DayLightSaving;
+							hq_data.hq_time.tm_year = datestructureget.Year + YEAR_CORR;
+							hq_data.hq_time.tm_mon = datestructureget.Month - MONTH_CORR;
+							hq_data.hq_time.tm_mday = datestructureget.Date;
+							hq_data.hq_time.tm_wday = datestructureget.WeekDay + WEEKDAY_CORR;
+
+							time_t time = mktime(&(hq_data.hq_time));
+							printf("TimeStamp: %s\n",ctime((const time_t*)&time));
+
+							/*Loading sensor data into buffer */
+							hq_data.sensor_values[0] = get_temperature();
+							hq_data.sensor_values[1] = get_humidity();
+							hq_data.sensor_values[2] = get_pressure();
+
+							conn_flag = 1;
+
+							HAL_Delay(10000);
+						}
+						/*When connection is lost conn_flag equals 1, else client could'not send data to server, timeout happens*/
+						if (conn_flag == 1) {
+							printf("> Disconnected from server!\n");
+						} else {
+							conn_flag = 0;
+						}
+						/*Closing socket when connection is lost or could'not connect */
+						WIFI_CloseClientConnection(socket);
+					} while (WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK);	//do-while
+					printf("> Disconnected from WIFI!\n");
+				} else {
+					error_handling("> ERROR : es-wifi module CANNOT get IP address\n", WIFI_STATUS_ERROR);
+				}
+			} else {
+				error_handling("> ERROR : CANNOT get MAC address\n", WIFI_STATUS_ERROR);
+			}
     	} else {
     	    error_handling("> ERROR : WIFI Module cannot be initialized.\n", WIFI_STATUS_ERROR);
     	}
-    	/*Getting MAC address */
-        if(WIFI_GetMAC_Address(mac_addr) == WIFI_STATUS_OK) {
-            printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
-                   mac_addr[0],
-                   mac_addr[1],
-                   mac_addr[2],
-                   mac_addr[3],
-                   mac_addr[4],
-                   mac_addr[5]);
-        } else {
-            error_handling("> ERROR : CANNOT get MAC address\n", WIFI_STATUS_ERROR);
-        }
-    	/*Waiting for connection with WIFI AP */
-    	printf("> Trying to connect to %s.\n", SSID);
-        while (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK);
-		printf("> Connected to %s! %d\n", SSID, wifi_isconnected());
-    	/*Getting IP Address */
-		if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
-			printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
-					ip_addr[0],
-					ip_addr[1],
-					ip_addr[2],
-					ip_addr[3]);
-		} else {
-			error_handling("> ERROR : es-wifi module CANNOT get IP address\n", WIFI_STATUS_ERROR);
-		}
-		/*Getting online time for TimeStamp*/
-		get_time();
-
-    	/*checking connection with WIFI AP */
-		do {
-			printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
-					remote_ip[0],
-					remote_ip[1],
-					remote_ip[2],
-					remote_ip[3],
-					SERVER_PORT);
-	    	/*Creating socket and connecting to HQ server */
-			socket = 0;
-			while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 10) != WIFI_STATUS_OK);
-
-				/* Get the RTC current Time */
-				HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
-				/* Get the RTC current Date */
-				HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
-
-				/*Loading time data into buffer for first send*/
-				hq_data.hq_time.tm_hour = timestructureget.Hours;
-				hq_data.hq_time.tm_min = timestructureget.Minutes;
-				hq_data.hq_time.tm_sec = timestructureget.Seconds;
-				hq_data.hq_time.tm_isdst = timestructureget.DayLightSaving;
-				hq_data.hq_time.tm_year = datestructureget.Year + YEAR_CORR;
-				hq_data.hq_time.tm_mon = datestructureget.Month - MONTH_CORR;
-				hq_data.hq_time.tm_mday = datestructureget.Date;
-				hq_data.hq_time.tm_wday = datestructureget.WeekDay + WEEKDAY_CORR;
-
-
-				/*Loading sensor data into buffer for first send*/
-				hq_data.sensor_values[0] = get_temperature();
-				hq_data.sensor_values[1] = get_humidity();
-				hq_data.sensor_values[2] = get_pressure();
-
-				conn_flag = 0;
-
-		    	/*Sending data when connected in every 10 seconds */
-				while (WIFI_SendData(socket, &hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK) {
-					/* Get the RTC current Time */
-					HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
-					/* Get the RTC current Date */
-					HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
-
-					/*Loading time data into buffer */
-					hq_data.hq_time.tm_hour = timestructureget.Hours;
-					hq_data.hq_time.tm_min = timestructureget.Minutes;
-					hq_data.hq_time.tm_sec = timestructureget.Seconds;
-					hq_data.hq_time.tm_isdst = timestructureget.DayLightSaving;
-					hq_data.hq_time.tm_year = datestructureget.Year + YEAR_CORR;
-					hq_data.hq_time.tm_mon = datestructureget.Month - MONTH_CORR;
-					hq_data.hq_time.tm_mday = datestructureget.Date;
-					hq_data.hq_time.tm_wday = datestructureget.WeekDay + WEEKDAY_CORR;
-
-					time_t time = mktime(&(hq_data.hq_time));
-					printf("TimeStamp: %s\n",ctime((const time_t*)&time));
-
-					/*Loading sensor data into buffer */
-					hq_data.sensor_values[0] = get_temperature();
-					hq_data.sensor_values[1] = get_humidity();
-					hq_data.sensor_values[2] = get_pressure();
-
-					conn_flag = 1;
-
-					HAL_Delay(10000);
-				}
-		    	/*When connection is lost conn_flag equals 1, else client could'not send data to server, timeout happens*/
-				if (conn_flag == 1) {
-					printf("> Disconnected from server!\n");
-				} else {
-					conn_flag = 0;
-				}
-			/*Closing socket when connection is lost or could'not connect */
-			WIFI_CloseClientConnection(socket);
-		} while (wifi_waitapstatechange() == 2);	//do-while
-		printf("> Disconnected from WIFI!\n");
     }	//while (1)
 }	//main
 

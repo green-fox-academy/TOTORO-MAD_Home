@@ -14,7 +14,6 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 void send_sensor_data();
-void get_time();
 #endif /* __WIFI_CONN_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
