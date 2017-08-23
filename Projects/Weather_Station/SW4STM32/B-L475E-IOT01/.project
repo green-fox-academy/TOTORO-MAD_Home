@@ -23,6 +23,7 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 		<nature>fr.ac6.mcu.ide.core.MCUProjectNature</nature>
+		<nature>org.eclipse.cdt.core.ccnature</nature>
 	</natures>
 	<linkedResources>
 		<link>
@@ -41,6 +42,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/syscalls.c</locationURI>
 		</link>
 		<link>
+			<name>Application/User/SDCard.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Src/SDCard.cpp</locationURI>
+		</link>
+		<link>
 			<name>Application/User/main.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/Src/main.c</locationURI>
@@ -49,6 +55,11 @@
 			<name>Application/User/sensors.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/Src/sensors.c</locationURI>
+		</link>
+		<link>
+			<name>Application/User/stm32l4xx_hal_msp.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Src/stm32l4xx_hal_msp.c</locationURI>
 		</link>
 		<link>
 			<name>Application/User/stm32l4xx_it.c</name>
@@ -154,6 +165,16 @@
 			<name>Drivers/STM32L4xx_HAL_Driver/stm32l4xx_hal_rcc_ex.c</name>
 			<type>1</type>
 			<locationURI>PARENT-4-PROJECT_LOC/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rcc_ex.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/STM32L4xx_HAL_Driver/stm32l4xx_hal_rtc.c</name>
+			<type>1</type>
+			<locationURI>PARENT-4-PROJECT_LOC/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rtc.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/STM32L4xx_HAL_Driver/stm32l4xx_hal_rtc_ex.c</name>
+			<type>1</type>
+			<locationURI>PARENT-4-PROJECT_LOC/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rtc_ex.c</locationURI>
 		</link>
 		<link>
 			<name>Drivers/STM32L4xx_HAL_Driver/stm32l4xx_hal_spi.c</name>

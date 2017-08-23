@@ -1606,7 +1606,7 @@ ES_WIFI_Status_t ES_WIFI_SendData(ES_WIFIObject_t *Obj, uint8_t Socket, uint8_t 
   ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
   if(ret == ES_WIFI_STATUS_OK)
   {
-    sprintf((char*)Obj->CmdData,"S2=%lu\r",Timeout);
+    sprintf((char*)Obj->CmdData,"S2=%d\r",Timeout);
     ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
     
     if(ret == ES_WIFI_STATUS_OK)

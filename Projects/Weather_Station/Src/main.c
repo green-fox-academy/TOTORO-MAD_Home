@@ -39,15 +39,41 @@
 #include "main.h"
 
 /* Private typedef -----------------------------------------------------------*/
+typedef struct tm {
+   int tm_sec;         /* seconds,  range 0 to 59          */
+   int tm_min;         /* minutes, range 0 to 59           */
+   int tm_hour;        /* hours, range 0 to 23             */
+   int tm_mday;        /* day of the month, range 1 to 31  */
+   int tm_mon;         /* month, range 0 to 11             */
+   int tm_year;        /* The number of years since 1900   */
+   int tm_wday;        /* day of the week, range 0 to 6    */
+   int tm_yday;        /* day in the year, range 0 to 365  */
+   int tm_isdst;       /* daylight saving time             */
+}rtc_time;
+
 /* Private define ------------------------------------------------------------*/
+#define CORR_YEAR	100	//Correcting year for RTC configuration
+#define CORR_MON	1	//Correcting month for RTC configuration
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
+/* UART handler declaration */
 UART_HandleTypeDef hDiscoUart;
+
+/* RTC handler declaration */
+RTC_HandleTypeDef RtcHandle;
+rtc_time *rtc_data;
+
+/* Buffers used for displaying Time and Date */
+uint8_t aShowTime[8] = {0}, aShowTimeStamp[50] = {0};
+uint8_t aShowDate[10] = {0}, aShowDateStamp[50] = {0};
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 void Error_Handler(void);
+static void RTC_TimeStampConfig(void);
+static void RTC_CalendarShow(void);
 void uart_init();
+void rtc_init();
 #ifdef __GNUC__
 /* With GCC, small printf (option LD Linker->Libraries->Small printf
    set to 'Yes') calls __io_putchar() */
@@ -184,6 +210,125 @@ void uart_init()
 	hDiscoUart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
 	BSP_COM_Init(COM1, &hDiscoUart);
+}
+
+void rtc_init()
+{
+	 /*##-1- Configure the RTC peripheral #######################################*/
+	  /* Configure RTC prescaler and RTC data registers */
+	  /* RTC configured as follow:
+	      - Hour Format    = Format 12
+	      - Asynch Prediv  = Value according to source clock
+	      - Synch Prediv   = Value according to source clock
+	      - OutPut         = Output Disable
+	      - OutPutPolarity = High Polarity
+	      - OutPutType     = Open Drain */
+	  __HAL_RTC_RESET_HANDLE_STATE(&RtcHandle);
+	  RtcHandle.Instance = RTC;
+	  RtcHandle.Init.HourFormat     = RTC_HOURFORMAT_24;
+	  RtcHandle.Init.AsynchPrediv   = RTC_ASYNCH_PREDIV;
+	  RtcHandle.Init.SynchPrediv    = RTC_SYNCH_PREDIV;
+	  RtcHandle.Init.OutPut         = RTC_OUTPUT_DISABLE;
+	  RtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+	  RtcHandle.Init.OutPutType     = RTC_OUTPUT_TYPE_OPENDRAIN;
+
+	  if(HAL_RTC_Init(&RtcHandle) != HAL_OK)
+	  {
+	    /* Initialization Error */
+	    Error_Handler();
+	  }
+
+	  /*##-2-  Configure RTC Timestamp ############################################*/
+	  RTC_TimeStampConfig();
+
+	  /* Infinite loop */
+//	  while (1)
+//	  {
+//	    /*##-3- Display the updated Time and Date ################################*/
+	    RTC_CalendarShow();
+//	  }
+}
+
+/**
+  * @brief  Configure the current time and date and activate timestamp.
+  * @param  None
+  * @retval None
+  */
+static void RTC_TimeStampConfig(void)
+{
+  RTC_DateTypeDef sdatestructure;
+  RTC_TimeTypeDef stimestructure;
+
+  /*##-1- Configure the Time Stamp peripheral ################################*/
+  /*  RTC TimeStamp generation: TimeStamp Rising Edge on PC.13 Pin */
+  HAL_RTCEx_SetTimeStamp_IT(&RtcHandle, RTC_TIMESTAMPEDGE_RISING, RTC_TIMESTAMPPIN_DEFAULT);
+
+  /*##-2- Configure the Date #################################################*/
+  sdatestructure.Year    = rtc_data->tm_year - CORR_YEAR;
+  sdatestructure.Month   = rtc_data->tm_mon + CORR_MON;
+  sdatestructure.Date    = rtc_data->tm_mday;
+  sdatestructure.WeekDay = rtc_data->tm_wday;
+
+  if(HAL_RTC_SetDate(&RtcHandle,&sdatestructure,RTC_FORMAT_BIN) != HAL_OK)
+  {
+    /* Initialization Error */
+    Error_Handler();
+  }
+
+  /*##-3- Configure the Time #################################################*/
+  stimestructure.Hours          = rtc_data->tm_hour;
+  stimestructure.Minutes        = rtc_data->tm_min;
+  stimestructure.Seconds        = rtc_data->tm_sec;
+  stimestructure.SubSeconds     = 0;
+  stimestructure.TimeFormat     = RTC_HOURFORMAT12_AM;
+  stimestructure.DayLightSaving = rtc_data->tm_isdst;
+  stimestructure.StoreOperation = RTC_STOREOPERATION_RESET;
+
+  if(HAL_RTC_SetTime(&RtcHandle,&stimestructure,RTC_FORMAT_BIN) != HAL_OK)
+  {
+    /* Initialization Error */
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief  Timestamp callback
+  * @param  hrtc : hrtc handle
+  * @retval None
+  */
+void HAL_RTCEx_TimeStampEventCallback(RTC_HandleTypeDef *hrtc)
+{
+  RTC_DateTypeDef sTimeStampDateget;
+  RTC_TimeTypeDef sTimeStampget;
+
+  HAL_RTCEx_GetTimeStamp(&RtcHandle, &sTimeStampget, &sTimeStampDateget, RTC_FORMAT_BIN);
+
+  /* Display time Format : hh:mm:ss */
+  sprintf((char*)aShowTimeStamp,"%.2d:%.2d:%.2d", sTimeStampget.Hours, sTimeStampget.Minutes, sTimeStampget.Seconds);
+  /* Display date Format : mm-dd */
+  sprintf((char*)aShowDateStamp,"%.2d-%.2d-%.2d", sTimeStampDateget.Month, sTimeStampDateget.Date, 2014);
+}
+
+/**
+  * @brief  Display the current time and date.
+  * @param  showtime : pointer to buffer
+  * @param  showdate : pointer to buffer
+  * @retval None
+  */
+static void RTC_CalendarShow(void)
+{
+  RTC_DateTypeDef sdatestructureget;
+  RTC_TimeTypeDef stimestructureget;
+
+  /* Get the RTC current Time */
+  HAL_RTC_GetTime(&RtcHandle, &stimestructureget, RTC_FORMAT_BIN);
+  /* Get the RTC current Date */
+  HAL_RTC_GetDate(&RtcHandle, &sdatestructureget, RTC_FORMAT_BIN);
+
+  /* Display time Format : hh:mm:ss */
+  sprintf((char*)aShowTime,"%.2d:%.2d:%.2d", stimestructureget.Hours, stimestructureget.Minutes, stimestructureget.Seconds);
+  /* Display date Format : mm-dd-yy */
+  sprintf((char*)aShowDate,"%.2d-%.2d-%.2d", sdatestructureget.Month, sdatestructureget.Date, 2000 + sdatestructureget.Year);
 }
 
 #ifdef  USE_FULL_ASSERT
