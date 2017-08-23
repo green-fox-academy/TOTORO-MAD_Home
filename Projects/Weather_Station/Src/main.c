@@ -54,6 +54,12 @@ typedef struct tm {
 /* Private define ------------------------------------------------------------*/
 #define CORR_YEAR	100	//Correcting year for RTC configuration
 #define CORR_MON	1	//Correcting month for RTC configuration
+enum {
+	TRANSFER_WAIT,
+	TRANSFER_COMPLETE,
+	TRANSFER_ERROR
+};
+
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
 /* UART handler declaration */
@@ -66,6 +72,18 @@ rtc_time *rtc_data;
 /* Buffers used for displaying Time and Date */
 uint8_t aShowTime[8] = {0}, aShowTimeStamp[50] = {0};
 uint8_t aShowDate[10] = {0}, aShowDateStamp[50] = {0};
+
+/* SPI handler declaration */
+SPI_HandleTypeDef SpiHandle;
+
+/* Buffer used for transmission */
+uint8_t aTxBuffer[] = "****SPI - Two Boards communication based on Interrupt **** SPI Message ******** SPI Message ******** SPI Message ****";
+
+/* Buffer used for reception */
+uint8_t aRxBuffer[BUFFERSIZE];
+
+/* transfer state */
+__IO uint32_t wTransferState = TRANSFER_WAIT;
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);

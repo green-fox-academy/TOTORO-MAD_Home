@@ -55,6 +55,9 @@
 /* RTC handler declared in "main.c" file */
 extern RTC_HandleTypeDef RtcHandle;
 
+/* SPI handler declared in "main.c" file */
+extern SPI_HandleTypeDef SpiHandle;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -175,6 +178,16 @@ void SysTick_Handler(void)
 void TAMP_STAMP_IRQHandler(void)
 {
   HAL_RTCEx_TamperTimeStampIRQHandler(&RtcHandle);
+}
+
+/**
+  * @brief  This function handles SPI interrupt request.
+  * @param  None
+  * @retval None
+  */
+void SPIx_IRQHandler(void)
+{
+  HAL_SPI_IRQHandler(&SpiHandle);
 }
 
 /**
