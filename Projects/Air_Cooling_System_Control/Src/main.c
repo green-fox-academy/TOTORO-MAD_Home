@@ -132,7 +132,6 @@ int main(void) {
 			/*trying to connect to server and sending data when connected in every 10 seconds */
 			do {
 				if(datalen > 0) {
-					printf("data received: %s\n", rx_data);
 					comm = atoi(rx_data);
 					printf("comm: %d\n", comm);
 					set_ac(comm);
