@@ -52,11 +52,11 @@ typedef struct hq_data {
 
 /* Private define ------------------------------------------------------------*/
 /* WIFI connection data */
-#define SSID     				"HUAWEI-B206"
-#define PASSWORD 				"47213979"
+#define SSID     				"A66 Guest"
+#define PASSWORD 				"Hello123"
 
 /*TCP client definitions */
-#define SERVER_PORT 			8005
+#define SERVER_PORT 			8002
 #define WIFI_WRITE_TIMEOUT 		100
 #define YEAR_CORR				100
 #define MONTH_CORR				1
@@ -73,7 +73,7 @@ typedef struct hq_data {
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
 /* TCP client variables */
-uint8_t remote_ip[] = {192, 168, 8, 101};
+uint8_t remote_ip[] = {10, 27, 99, 11};
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
 int8_t socket = 1;
