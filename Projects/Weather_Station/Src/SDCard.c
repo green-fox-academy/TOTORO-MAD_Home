@@ -220,7 +220,7 @@ void wait_until_ready();
 HAL_StatusTypeDef spi_receive(uint8_t* pdata, uint16_t size);
 HAL_StatusTypeDef lspi_wait_flag_state_until_timeout(SPI_HandleTypeDef *hspi, uint32_t Flag, uint32_t State, uint32_t Timeout, uint32_t Tickstart);
 uint8_t card_a_cmd(uint8_t cmd, uint32_t arg);
-uint8_t readRegister(uint8_t cmd, void* buf);
+uint8_t read_register(uint8_t cmd, void* buf);
 uint8_t readCSD(union csd_t* csd);
 
 
@@ -444,6 +444,24 @@ uint32_t get_size() {
 }
 
 uint8_t readCSD(union csd_t* csd) {
-	return readRegister(CMD9, csd);
+	return read_register(CMD9, csd);
 }
 
+/** read CID or CSR register */
+uint8_t read_register(uint8_t cmd, void* buf) {
+	uint8_t* dst = (uint8_t*)buf;
+	if (card_command(cmd, 0)) {
+		deselect_card();
+		return 0;
+	}
+	uint8_t temp = 0xFF;
+	while (temp == 0xFF) {
+		spi_receive(&temp, 1);
+	}
+	// transfer data
+	spi_receive(dst, 16);
+	spi_receive(&temp, 1); //CRC1
+	spi_receive(&temp, 1); //CRC2
+	deselect_card();
+	return 1;
+}

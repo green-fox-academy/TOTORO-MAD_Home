@@ -80,7 +80,7 @@ SPI_HandleTypeDef spihandle;
 uint8_t aTxBuffer[] = "****SPI - Two Boards communication based on Interrupt **** SPI Message ******** SPI Message ******** SPI Message ****";
 
 /* Buffer used for reception */
-uint8_t aRxBuffer[BUFFERSIZE];
+
 
 /* transfer state */
 __IO uint32_t wTransferState = TRANSFER_WAIT;
