@@ -3,7 +3,7 @@
 #include "stm32l4xx_hal.h"
 #include "stm32l475e_iot01.h"
 /* Private typedef -----------------------------------------------------------*/
-#define  PERIOD_VALUE	0xFB00				/* Period Value  */
+#define  PERIOD_VALUE	0xFFFF				/* Period Value  */
 
 /* Private define ------------------------------------------------------------*/
 #define  PULSE_VALUE    (PERIOD_VALUE/2)	/* Duty cycle 50%  */
@@ -67,7 +67,7 @@ PUTCHAR_PROTOTYPE
 void time_base_init()
 {
 	/* Compute the prescaler value to have TIM2 counter clock equal to 1742 Hz, period Time 574 micro sec */
-	uint32_t prescalervalue = (uint32_t)((SystemCoreClock) / 1000000);
+	uint32_t prescalervalue = (uint32_t)((SystemCoreClock) / 1000000) - 1;
 
 	/* Set TIM2 instance */
 	tim_base_handle.Instance = TIM2;
@@ -103,18 +103,18 @@ void delay(uint16_t delay_value)
 {
 	tickstart = __HAL_TIM_GET_COUNTER(&tim_base_handle);
 
-	if ((delay_value + tickstart) > 0xFFFF) {
-		while (__HAL_TIM_GET_COUNTER(&tim_base_handle) != 0);
-		while (__HAL_TIM_GET_COUNTER(&tim_base_handle) != delay_value - (0xFFFF - tickstart));
+	if ((delay_value + tickstart) > PERIOD_VALUE) {
+		while (__HAL_TIM_GET_COUNTER(&tim_base_handle) != PERIOD_VALUE);
+		while (__HAL_TIM_GET_COUNTER(&tim_base_handle) != (delay_value + 4 - (PERIOD_VALUE - tickstart)));
 	} else {
-		while ((__HAL_TIM_GET_COUNTER(&tim_base_handle) - tickstart) < delay_value);
+		while ((__HAL_TIM_GET_COUNTER(&tim_base_handle) - tickstart) < delay_value + 4);
 	}
 }
 
 void pwm_init()
 {
 	/* Compute the prescaler value to have TIM3 counter clock equal to 40000 Hz */
-	uint8_t prescalervalue = 20;
+	uint8_t prescalervalue = 18;
 
 	/* Set TIM3 instance */
 	tim_pwm_handle.Instance = TIM3;
