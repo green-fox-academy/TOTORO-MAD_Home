@@ -220,6 +220,10 @@ void wait_until_ready();
 HAL_StatusTypeDef spi_receive(uint8_t* pdata, uint16_t size);
 HAL_StatusTypeDef lspi_wait_flag_state_until_timeout(SPI_HandleTypeDef *hspi, uint32_t Flag, uint32_t State, uint32_t Timeout, uint32_t Tickstart);
 uint8_t card_a_cmd(uint8_t cmd, uint32_t arg);
+uint8_t readRegister(uint8_t cmd, void* buf);
+uint8_t readCSD(union csd_t* csd);
+
+
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -358,7 +362,7 @@ HAL_StatusTypeDef spi_receive(uint8_t* pdata, uint16_t size) {
 		spihandle.RxXferCount--;
 		HAL_Delay(1000);
 	}
-	pdata_val[0] = pdata;
+	pdata_val[0] = &pdata;
 	if (lspi_wait_flag_state_until_timeout(&spihandle, SPI_FLAG_BSY, RESET, 100, HAL_GetTick()) != HAL_OK) {
 		spihandle.ErrorCode |= HAL_SPI_ERROR_FLAG;
 
@@ -412,3 +416,34 @@ uint8_t card_a_cmd(uint8_t cmd, uint32_t arg)
 	card_command(CMD55, 0);
 	return card_command(cmd, arg);
 }
+
+uint32_t get_size() {
+	if (_sdSize == 0) {
+		//We have not read the disk size just yet :O
+		union csd_t csd;
+		if (!readCSD(&csd))
+			return 0;
+		if (csd.v1.csd_ver == 0) {
+			uint8_t read_bl_len = csd.v1.read_bl_len;
+			uint16_t c_size = (csd.v1.c_size_high << 10)
+					| (csd.v1.c_size_mid << 2) | csd.v1.c_size_low;
+			uint8_t c_size_mult = (csd.v1.c_size_mult_high << 1)
+					| csd.v1.c_size_mult_low;
+			c_size = (uint32_t)(c_size + 1) << (c_size_mult + read_bl_len - 7);
+			c_size /= 1024;
+		} else if (csd.v2.csd_ver == 1) {
+			uint32_t c_size = ((uint32_t) csd.v2.c_size_high << 16)
+					| (csd.v2.c_size_mid << 8) | csd.v2.c_size_low;
+			c_size *= 1024;
+			_sdSize = c_size;
+
+		} else {
+		}
+	}
+	return _sdSize;
+}
+
+uint8_t readCSD(union csd_t* csd) {
+	return readRegister(CMD9, csd);
+}
+

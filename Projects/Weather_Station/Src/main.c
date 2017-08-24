@@ -371,6 +371,7 @@ void spi_init()
 	  spihandle.Init.Mode 			   = SPI_MODE_MASTER;
 
 	  printf("sdcard ret %d\n",sdcard_init());
+	  printf("size of sdcard %d", get_size());
 //	  if(HAL_SPI_Init(&spihandle) != HAL_OK)
 //	  {
 //	    /* Initialization Error */
