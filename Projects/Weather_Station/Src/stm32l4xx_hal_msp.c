@@ -110,14 +110,14 @@ void HAL_RTC_MspInit(RTC_HandleTypeDef *hrtc)
   RCC_OscInitStruct.LSEState = RCC_LSE_OFF;
   if(HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   { 
-    Error_Handler();
+    //Error_Handler();
   }
 
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
   PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
   if(HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   { 
-    Error_Handler();
+    //Error_Handler();
   }
 #else
 #error Please select the RTC Clock source inside the main.h file
@@ -186,6 +186,11 @@ GPIO_InitTypeDef  GPIO_InitStruct;
     GPIO_InitStruct.Pin = SPIx_MOSI_PIN;
     GPIO_InitStruct.Alternate = SPIx_MOSI_AF;
     HAL_GPIO_Init(SPIx_MOSI_GPIO_PORT, &GPIO_InitStruct);
+
+    /* SPI NSS GPIO pin configuration  */
+    GPIO_InitStruct.Pin = SPIx_NSS_PIN;
+    GPIO_InitStruct.Alternate = SPIx_NSS_OP;
+    HAL_GPIO_Init(SPIx_NSS_GPIO_PORT, &GPIO_InitStruct);
 
     /*##-3- Configure the NVIC for SPI #########################################*/
     /* NVIC for SPI */

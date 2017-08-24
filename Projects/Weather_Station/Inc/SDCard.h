@@ -1,9 +1,12 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __SDCARD_H
 #define __SDCARD_H
-
+#ifdef __cplusplus
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "stm32l4xx_hal.h"
+
+/* IOT includes component */
+#include "stm32l475e_iot01.h"
 
 /* Defines -------------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -253,11 +256,6 @@ private:
 
 };
 
-
+#endif
 #endif /* __SDCARD_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-
-
-
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
