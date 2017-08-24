@@ -94,11 +94,10 @@ ntp_packet packet = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 uint16_t ntp_datalen;
 int8_t ntp_socket = 0;
 extern rtc_time *rtc_data;
-
+uint8_t get_time_flag = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 void error_handling(const char *error_string, uint8_t error_code);
-
 /* Private functions ---------------------------------------------------------*/
 
 void get_time()
@@ -171,6 +170,7 @@ void get_time()
 
    /* RTC initialization */
    rtc_init();
+   get_time_flag = 1;
 }
 void send_sensor_data()
 {
@@ -191,8 +191,40 @@ void send_sensor_data()
 
 				/*Waiting for connection with WIFI AP */
 				printf("> Trying to connect to %s.\n", SSID);
+				  float buffertx[128];
+				  for (int i = 0; i < 128; i++) {
+					  buffertx [i] = i;
+				  }
+				  printf("%f buff\n", buffertx[12]);
+				  printf("writing block\n");
+
+				  printf("write block ret%d\n", write_block(0xFFFF, &buffertx));
+				  float bufferrx[128];
+				  printf("reading block\n");
+				  read_block(0xFFFF, &bufferrx);
+				  printf("%f %f\n", bufferrx[12], bufferrx[24]);
 				while (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK) {
-					if (wifi_isconnected() == 0) {
+					uint32_t block_cntr = 0xFFFF;
+					if (get_time_flag == 1) {
+						float buffertx[128];
+						/*Loading time data into buffer for first send*/
+						buffertx[0] = timestructureget.Hours;
+						buffertx[1] = timestructureget.Minutes;
+						buffertx[2] = timestructureget.Seconds;
+						buffertx[3] = timestructureget.DayLightSaving;
+						buffertx[4] = datestructureget.Year + YEAR_CORR;
+						buffertx[5] = datestructureget.Month - MONTH_CORR;
+						buffertx[6] = datestructureget.Date;
+						buffertx[7] = datestructureget.WeekDay + WEEKDAY_CORR;
+
+
+						/*Loading sensor data into buffer for first send*/
+						buffertx[0] = get_temperature();
+						buffertx[1] = get_humidity();
+						buffertx[2] = get_pressure();
+						printf("writing block\n");
+						write_block(block_cntr, &buffertx);
+						block_cntr++;
 					}
 				}
 				/*Getting IP Address */
@@ -216,7 +248,7 @@ void send_sensor_data()
 								SERVER_PORT);
 						/*Creating socket and connecting to HQ server */
 						socket = 1;
-						while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 10) != WIFI_STATUS_OK);
+						while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 10) != WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK);
 
 						/* Get the RTC current Time */
 						HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
