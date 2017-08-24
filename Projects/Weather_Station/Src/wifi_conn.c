@@ -80,7 +80,8 @@ int8_t socket = 1;
 uint16_t datalen;
 uint8_t conn_flag;
 hq_data_t hq_data;
-/*  */
+
+/* RTC variables */
 extern RTC_HandleTypeDef RtcHandle;
 RTC_DateTypeDef datestructureget;
 RTC_TimeTypeDef timestructureget;
@@ -123,10 +124,10 @@ void get_time()
 			if (WIFI_OpenClientConnection(ntp_socket, WIFI_UDP_PROTOCOL, "UDP_CLIENT", host_ip_addr, host_port, 10) == WIFI_STATUS_OK) {
 				printf("Client is connected, sending packet to server!\n");
 
-				if (WIFI_SendData(ntp_socket, (char*)&packet, sizeof(ntp_packet), &ntp_datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && ntp_datalen == PACKET_LENGHT) {
+				if (WIFI_SendData(ntp_socket, (uint8_t*)&packet, sizeof(ntp_packet), &ntp_datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && ntp_datalen == PACKET_LENGHT) {
 					printf("Packet has been sent to server, waiting for packet to arrive back!\n");
 
-					if(WIFI_ReceiveData(ntp_socket, (char*)&packet, sizeof(ntp_packet), &ntp_datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && ntp_datalen == PACKET_LENGHT) {
+					if(WIFI_ReceiveData(ntp_socket, (uint8_t*)&packet, sizeof(ntp_packet), &ntp_datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && ntp_datalen == PACKET_LENGHT) {
 						printf("Packet has been received from server!\n");
 
 						if (WIFI_CloseClientConnection(ntp_socket) == WIFI_STATUS_OK) {
@@ -190,7 +191,10 @@ void send_sensor_data()
 
 				/*Waiting for connection with WIFI AP */
 				printf("> Trying to connect to %s.\n", SSID);
-				while (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK);
+				while (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK) {
+					if (wifi_isconnected() == 0) {
+					}
+				}
 				/*Getting IP Address */
 				if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
 					printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
@@ -238,7 +242,7 @@ void send_sensor_data()
 						conn_flag = 0;
 
 						/*Sending data when connected in every 10 seconds */
-						while (WIFI_SendData(socket, &hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK) {
+						while (WIFI_SendData(socket, (uint8_t*)&hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK) {
 							/* Get the RTC current Time */
 							HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
 							/* Get the RTC current Date */

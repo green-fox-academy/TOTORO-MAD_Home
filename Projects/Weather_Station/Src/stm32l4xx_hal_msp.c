@@ -187,6 +187,11 @@ GPIO_InitTypeDef  GPIO_InitStruct;
     GPIO_InitStruct.Alternate = SPIx_MOSI_AF;
     HAL_GPIO_Init(SPIx_MOSI_GPIO_PORT, &GPIO_InitStruct);
 
+    /* SPI NSS GPIO pin configuration  */
+    GPIO_InitStruct.Pin = SPIx_NSS_PIN;
+    GPIO_InitStruct.Alternate = SPIx_NSS_OP;
+    HAL_GPIO_Init(SPIx_NSS_GPIO_PORT, &GPIO_InitStruct);
+
     /*##-3- Configure the NVIC for SPI #########################################*/
     /* NVIC for SPI */
     HAL_NVIC_SetPriority(SPIx_IRQn, 1, 0);
@@ -222,7 +227,6 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef *hspi)
     HAL_NVIC_DisableIRQ(SPIx_IRQn);
   }
 }
-
 /**
   * @}
   */

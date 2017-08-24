@@ -74,7 +74,7 @@ uint8_t aShowTime[8] = {0}, aShowTimeStamp[50] = {0};
 uint8_t aShowDate[10] = {0}, aShowDateStamp[50] = {0};
 
 /* SPI handler declaration */
-SPI_HandleTypeDef SpiHandle;
+SPI_HandleTypeDef spihandle;
 
 /* Buffer used for transmission */
 uint8_t aTxBuffer[] = "****SPI - Two Boards communication based on Interrupt **** SPI Message ******** SPI Message ******** SPI Message ****";
@@ -92,6 +92,7 @@ static void RTC_TimeStampConfig(void);
 static void RTC_CalendarShow(void);
 void uart_init();
 void rtc_init();
+void spi_init();
 #ifdef __GNUC__
 /* With GCC, small printf (option LD Linker->Libraries->Small printf
    set to 'Yes') calls __io_putchar() */
@@ -123,6 +124,7 @@ int main(void) {
 	/* Configure UART */
 	uart_init();
 
+	spi_init();
 	/* Sending sensor data through WIFI connection to HQ device*/
 	send_sensor_data();
 }
@@ -347,6 +349,134 @@ static void RTC_CalendarShow(void)
   sprintf((char*)aShowTime,"%.2d:%.2d:%.2d", stimestructureget.Hours, stimestructureget.Minutes, stimestructureget.Seconds);
   /* Display date Format : mm-dd-yy */
   sprintf((char*)aShowDate,"%.2d-%.2d-%.2d", sdatestructureget.Month, sdatestructureget.Date, 2000 + sdatestructureget.Year);
+}
+
+void spi_init()
+{
+	 /*##-1- Configure the SPI peripheral #######################################*/
+	  /* Set the SPI parameters */
+	  spihandle.Instance               = SPIx;
+	  spihandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+	  spihandle.Init.Direction         = SPI_DIRECTION_2LINES;
+	  spihandle.Init.CLKPhase          = SPI_PHASE_1EDGE;
+	  spihandle.Init.CLKPolarity       = SPI_POLARITY_LOW;
+	  spihandle.Init.DataSize          = SPI_DATASIZE_8BIT;
+	  spihandle.Init.FirstBit          = SPI_FIRSTBIT_MSB;
+	  spihandle.Init.TIMode            = SPI_TIMODE_DISABLE;
+	  spihandle.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;
+	  spihandle.Init.CRCPolynomial     = 7;
+	  spihandle.Init.CRCLength         = SPI_CRC_LENGTH_8BIT;
+	  spihandle.Init.NSS               = SPI_NSS_SOFT;
+	  spihandle.Init.NSSPMode          = SPI_NSS_PULSE_DISABLE;
+	  spihandle.Init.Mode 			   = SPI_MODE_MASTER;
+
+	  printf("sdcard ret %d\n",sdcard_init());
+//	  if(HAL_SPI_Init(&spihandle) != HAL_OK)
+//	  {
+//	    /* Initialization Error */
+//	    Error_Handler();
+//	  }
+//
+//	#ifdef MASTER_BOARD
+//	  /* Configure User push-button button */
+//	  BSP_PB_Init(BUTTON_USER,BUTTON_MODE_GPIO);
+//	  /* Wait for User push-button press before starting the Communication */
+//	  while (BSP_PB_GetState(BUTTON_USER) != GPIO_PIN_SET)
+//	  {
+//	    BSP_LED_Toggle(LED2);
+//	    HAL_Delay(100);
+//	  }
+//	  BSP_LED_Off(LED2);
+//	#endif /* MASTER_BOARD */
+//
+//	  /*##-2- Start the Full Duplex Communication process ########################*/
+//	  /* While the SPI in TransmitReceive process, user can transmit data through
+//	     "aTxBuffer" buffer & receive data through "aRxBuffer" */
+//	  if(HAL_SPI_TransmitReceive_IT(&spihandle, (uint8_t*)aTxBuffer, (uint8_t *)aRxBuffer, BUFFERSIZE) != HAL_OK)
+//	  {
+//	    /* Transfer error in transmission process */
+//	    Error_Handler();
+//	  }
+//
+//	  /*##-3- Wait for the end of the transfer ###################################*/
+//	  /*  Before starting a new communication transfer, you must wait the callback call
+//	      to get the transfer complete confirmation or an error detection.
+//	      For simplicity reasons, this example is just waiting till the end of the
+//	      transfer, but application may perform other tasks while transfer operation
+//	      is ongoing. */
+//	  while (wTransferState == TRANSFER_WAIT)
+//	  {
+//	  }
+//
+//	  switch(wTransferState)
+//	  {
+//	    case TRANSFER_COMPLETE :
+//	      /*##-4- Compare the sent and received buffers ##############################*/
+//	      if(Buffercmp((uint8_t*)aTxBuffer, (uint8_t*)aRxBuffer, BUFFERSIZE))
+//	      {
+//	        /* Processing Error */
+//	        Error_Handler();
+//	      }
+//	    break;
+//	    default :
+//	      Error_Handler();
+//	    break;
+//	  }
+//
+//	  /* Infinite loop */
+//	  while (1)
+//	  {
+//	  }
+}
+
+/**
+  * @brief  TxRx Transfer completed callback.
+  * @param  hspi: SPI handle
+  * @note   This example shows a simple way to report end of Interrupt TxRx transfer, and
+  *         you can add your own implementation.
+  * @retval None
+  */
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+  /* Turn LED on: Transfer in transmission process is correct */
+  BSP_LED_On(LED2);
+  /* Turn LED on: Transfer in reception process is correct */
+  BSP_LED_On(LED2);
+  wTransferState = TRANSFER_COMPLETE;
+}
+
+/**
+  * @brief  SPI error callbacks.
+  * @param  hspi: SPI handle
+  * @note   This example shows a simple way to report transfer error, and you can
+  *         add your own implementation.
+  * @retval None
+  */
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
+{
+  wTransferState = TRANSFER_ERROR;
+}
+
+/**
+  * @brief  Compares two buffers.
+  * @param  pBuffer1, pBuffer2: buffers to be compared.
+  * @param  BufferLength: buffer's length
+  * @retval 0  : pBuffer1 identical to pBuffer2
+  *         >0 : pBuffer1 differs from pBuffer2
+  */
+static uint16_t Buffercmp(uint8_t *pBuffer1, uint8_t *pBuffer2, uint16_t BufferLength)
+{
+  while (BufferLength--)
+  {
+    if ((*pBuffer1) != *pBuffer2)
+    {
+      return BufferLength;
+    }
+    pBuffer1++;
+    pBuffer2++;
+  }
+
+  return 0;
 }
 
 #ifdef  USE_FULL_ASSERT

@@ -56,8 +56,7 @@
 #include "wifi_conn.h"
 
 #include <stdio.h>
-
-
+#include "sd_card.h"
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Defines related to Clock configuration */
@@ -97,6 +96,9 @@
 #define SPIx_MOSI_PIN                    GPIO_PIN_7
 #define SPIx_MOSI_GPIO_PORT              GPIOA
 #define SPIx_MOSI_AF                     GPIO_AF5_SPI1
+#define SPIx_NSS_PIN                     GPIO_PIN_2
+#define SPIx_NSS_GPIO_PORT               GPIOA
+#define SPIx_NSS_OP                      GPIO_MODE_OUTPUT_PP
 
 /* Definition for SPIx's NVIC */
 #define SPIx_IRQn                        SPI1_IRQn

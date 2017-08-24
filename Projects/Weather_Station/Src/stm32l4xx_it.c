@@ -56,7 +56,7 @@
 extern RTC_HandleTypeDef RtcHandle;
 
 /* SPI handler declared in "main.c" file */
-extern SPI_HandleTypeDef SpiHandle;
+extern SPI_HandleTypeDef spihandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -187,7 +187,7 @@ void TAMP_STAMP_IRQHandler(void)
   */
 void SPIx_IRQHandler(void)
 {
-  HAL_SPI_IRQHandler(&SpiHandle);
+  HAL_SPI_IRQHandler(&spihandle);
 }
 
 /**
