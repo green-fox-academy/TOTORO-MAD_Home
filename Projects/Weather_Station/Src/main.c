@@ -76,12 +76,6 @@ uint8_t aShowDate[10] = {0}, aShowDateStamp[50] = {0};
 /* SPI handler declaration */
 SPI_HandleTypeDef spihandle;
 
-/* Buffer used for transmission */
-uint8_t aTxBuffer[] = "****SPI - Two Boards communication based on Interrupt **** SPI Message ******** SPI Message ******** SPI Message ****";
-
-/* Buffer used for reception */
-
-
 /* transfer state */
 __IO uint32_t wTransferState = TRANSFER_WAIT;
 
@@ -371,7 +365,20 @@ void spi_init()
 	  spihandle.Init.Mode 			   = SPI_MODE_MASTER;
 
 	  printf("sdcard ret %d\n",sdcard_init());
-	  printf("size of sdcard %d", get_size());
+	  printf("size of sdcard %d\n", get_size());
+
+	  uint8_t buffertx[512];
+	  for (int i = 0; i < 512; i++) {
+		  buffertx [i] = i;
+	  }
+	  printf("%d buff\n", buffertx[12]);
+	  printf("writing block\n");
+
+	  printf("write block ret%d\n", write_block(0xFFFF, &buffertx));
+	  uint8_t bufferrx[512];
+	  printf("reading block\n");
+	  read_block(0xFFFF, &bufferrx);
+	  printf("%d %d\n", bufferrx[12], bufferrx[24]);
 //	  if(HAL_SPI_Init(&spihandle) != HAL_OK)
 //	  {
 //	    /* Initialization Error */

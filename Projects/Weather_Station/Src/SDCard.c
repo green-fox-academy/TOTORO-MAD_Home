@@ -222,9 +222,8 @@ HAL_StatusTypeDef lspi_wait_flag_state_until_timeout(SPI_HandleTypeDef *hspi, ui
 uint8_t card_a_cmd(uint8_t cmd, uint32_t arg);
 uint8_t read_register(uint8_t cmd, void* buf);
 uint8_t readCSD(union csd_t* csd);
-
-
-
+uint8_t write_block(uint32_t blockaddr, uint8_t* buffer);
+uint8_t read_block(uint32_t blockaddr, uint8_t* buffer);
 /* Private functions ---------------------------------------------------------*/
 
 uint8_t sdcard_init(){
@@ -301,10 +300,8 @@ uint8_t card_command(uint8_t command, uint32_t arg) {
 	HAL_SPI_Transmit(&spihandle, command_sequence, 6, 100);
 	//Data sent, now await Response
 	uint8_t count = 20;
-	HAL_Delay(3000);
 	while ((res & 0x80) && count) {
 		spi_receive(&res, 1);
-		printf("res%d count%d\n", res, count);
 		count--;
 	}
 	return res;
@@ -312,16 +309,8 @@ uint8_t card_command(uint8_t command, uint32_t arg) {
 
 void wait_until_ready() {
 	uint8_t ans[1] = { 0 };
-	if (pdata_val[0] == 25) {
-		while (ans[0] != pdata_val[0]) {
-			printf("ans%d spi rec%d\n", ans[0], spi_receive(ans, 1));
-			spi_receive(ans, 1);
-		}
-	} else if (pdata_val[0] == 255) {
-		while (ans[0] != pdata_val[0]) {
-			printf("ans%d spi rec%d\n", ans[0], spi_receive(ans, 1));
-			spi_receive(ans, 1);
-		}
+	while (ans[0] != 0xFF) {
+		spi_receive(ans, 1);
 	}
 }
 
@@ -360,12 +349,10 @@ HAL_StatusTypeDef spi_receive(uint8_t* pdata, uint16_t size) {
 			;
 		(*(uint8_t *) pdata++) = spihandle.Instance->DR;
 		spihandle.RxXferCount--;
-		HAL_Delay(1000);
 	}
-	pdata_val[0] = &pdata;
+	//pdata_val[0] = &pdata;
 	if (lspi_wait_flag_state_until_timeout(&spihandle, SPI_FLAG_BSY, RESET, 100, HAL_GetTick()) != HAL_OK) {
 		spihandle.ErrorCode |= HAL_SPI_ERROR_FLAG;
-
 		errorcode = HAL_TIMEOUT;
 	}
 	spihandle.State = HAL_SPI_STATE_READY;
@@ -462,6 +449,78 @@ uint8_t read_register(uint8_t cmd, void* buf) {
 	spi_receive(dst, 16);
 	spi_receive(&temp, 1); //CRC1
 	spi_receive(&temp, 1); //CRC2
+	deselect_card();
+	return 1;
+}
+
+uint8_t write_block(uint32_t blockaddr, uint8_t* buffer) {
+	//The cardCommand will select the card so we have to make sure we clean up
+	if (card_command(CMD24, blockaddr)) {
+		/*
+		 * Error
+		 */
+		deselect_card();
+		return 0;
+	}
+	/*
+	 * Write the data
+	 */
+	uint8_t temp = DATA_START_BLOCK;
+	HAL_SPI_Transmit(&spihandle, &temp, 1, 100);
+	HAL_SPI_Transmit(&spihandle, buffer, 512, 100);
+	temp = 0xFF;
+	HAL_SPI_Transmit(&spihandle, &temp, 1, 100);
+	HAL_SPI_Transmit(&spihandle, &temp, 1, 100);
+	//read response
+	spi_receive(&temp, 1);
+	if ((temp & DATA_RES_MASK) != DATA_RES_ACCEPTED) {
+		/*
+		 * Error
+		 */
+		deselect_card();
+		return 0;
+	}
+	// wait for flash programming to complete
+	wait_until_ready();
+
+	// response is r2 so get and check two bytes for nonzero
+	if (card_command(CMD13, 0)) {
+		/*
+		 * Error
+		 */
+		deselect_card();
+		return 0;
+	}
+	spi_receive(&temp, 1);
+	if (temp) {
+		/*
+		 * Error
+		 */
+		deselect_card();
+		return 0;
+	}
+	deselect_card();
+	return 1;
+}
+
+uint8_t read_block(uint32_t blockaddr, uint8_t* buffer) {
+	if (card_command(CMD17, blockaddr)) {
+		/*
+		 * Error
+		 */
+		deselect_card();
+		return 0;
+	}
+	uint8_t temp = 0xFF;
+	while (temp == 0xFF) {
+		HAL_SPI_Receive(&spihandle, &temp, 1, 100);
+	}
+	spi_receive(buffer, 512);
+	//eat the CRC
+	temp = 0xFF;
+	spi_receive(&temp, 1);
+	temp = 0xFF;
+	spi_receive(&temp, 1);
 	deselect_card();
 	return 1;
 }
