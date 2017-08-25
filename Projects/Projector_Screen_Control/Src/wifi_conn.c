@@ -7,7 +7,7 @@
 /* Private define ------------------------------------------------------------*/
 #define SSID     				"A66 Guest"
 #define PASSWORD 				"Hello123"
-#define SERVER_PORT 			16000
+#define SERVER_PORT 			8003
 #define WIFI_READ_TIMEOUT 		1000
 #define CONNECTION_TRIAL_MAX    10
 /* Private macro -------------------------------------------------------------*/
@@ -18,7 +18,7 @@ uint8_t ip[] = {10, 27, 99, 161};
 uint8_t firm_ip[] = {10, 27, 99, 161};
 int32_t socket;
 uint16_t datalen;
-uint8_t conn_flag;
+uint8_t connentions = 0;
 char command;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -50,7 +50,8 @@ void send_ps_command()
 		do {
 			int8_t socket = 0;
 			printf("Start TCP Server...\n");
-			while(wifi_create_server(socket, WIFI_TCP_PROTOCOL, "asd", SERVER_PORT) != WIFI_STATUS_OK);
+			while(WIFI_StartServer(socket, WIFI_TCP_PROTOCOL, "asd", SERVER_PORT) != WIFI_STATUS_OK);
+			connentions++;
 			printf("----------------------------------------- \n");
 			printf("TCP Server Started \n");
 			printf("receiving data...\n");
@@ -66,7 +67,7 @@ void send_ps_command()
 						printf("going down\n");
 					} else if (command == '2') {
 						ctrl_stop();
-						printf("staph!!\n");
+						printf("stop\n");
 					} else {
 						printf("wrong command!\n");
 						printf("%d\n", command);
@@ -78,8 +79,9 @@ void send_ps_command()
 			printf("Closing the socket...\n");
 			WIFI_CloseClientConnection(socket);
 			WIFI_StopServer(socket);
-		}while (wifi_isconnected() == 1); //do-while
+		} while (wifi_isconnected() == 1 && connentions < 4); //do-while
 		/*If there might be a problem with pinging, disconnect from WIFI AP anyway */
+		connentions = 0;
 		printf("> Disconnected from WIFI!\n");
 		WIFI_Disconnect();
     }	//while (1)
