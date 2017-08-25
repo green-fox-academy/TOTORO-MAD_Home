@@ -19,7 +19,7 @@ uint8_t firm_ip[] = {10, 27, 99, 161};
 int32_t socket;
 uint16_t datalen;
 uint8_t connentions = 0;
-char command;
+uint8_t command;
 
 /* Private function prototypes -----------------------------------------------*/
 void error_handling(const char *error_string, uint8_t error_code);
@@ -58,14 +58,14 @@ void send_ps_command()
 			/*trying to connect to server and sending data when connected in every 10 seconds */
 			do {
 				if(datalen >0) {
-					if (command == '1') {
+					if (command == 1) {
 						ctrl_up();
 						printf("going up\n");
 
-					} else if (command == '3') {
+					} else if (command == 3) {
 						ctrl_down();
 						printf("going down\n");
-					} else if (command == '2') {
+					} else if (command == 2) {
 						ctrl_stop();
 						printf("stop\n");
 					} else {
