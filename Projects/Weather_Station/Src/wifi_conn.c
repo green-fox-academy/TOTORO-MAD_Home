@@ -83,8 +83,8 @@ int8_t socket = 1;
 uint16_t datalen;
 uint8_t conn_flag;
 hq_data_t hq_data;
-uint32_t write_block_cntr;
-uint32_t read_block_cntr;
+uint32_t write_block_cntr = START_BLOCK;
+uint32_t read_block_cntr  = START_BLOCK;
 
 /* RTC variables */
 extern RTC_HandleTypeDef RtcHandle;
@@ -198,22 +198,23 @@ void send_sensor_data()
 
 				/*Waiting for connection with WIFI AP */
 				printf("> Trying to connect to %s.\n", SSID);
-				  float buffer_tx[128];
-				  for (int i = 0; i < 128; i++) {
-					  buffer_tx [i] = i;
-				  }
-				  printf("%f buff\n", buffer_tx[12]);
-				  printf("writing block\n");
+//				  float buffer_tx[128];
+//				  for (int i = 0; i < 128; i++) {
+//					  buffer_tx [i] = i;
+//				  }
+//				  printf("%f buff\n", buffer_tx[12]);
+//				  printf("writing block\n");
+//
+//				  printf("write block ret%d\n", write_block(0xFFFF, &buffer_tx));
+//				  float bufferrx[128];
+//				  printf("reading block\n");
+//				  read_block(0xFFFF, &bufferrx);
+//				  printf("%f %f\n", bufferrx[12], bufferrx[24]);
+//
 
-				  printf("write block ret%d\n", write_block(0xFFFF, &buffer_tx));
-				  float bufferrx[128];
-				  printf("reading block\n");
-				  read_block(0xFFFF, &bufferrx);
-				  printf("%f %f\n", bufferrx[12], bufferrx[24]);
 				while (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK) {
 
 					/*Start to log after first connection with NTP server */
-					write_block_cntr = START_BLOCK;
 					if (get_time_flag == 1) {
 						logging_hq_data();
 					}
@@ -272,8 +273,11 @@ void send_sensor_data()
 						while (WIFI_SendData(socket, (uint8_t*)&hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK) {
 
 							/*Sending logged data */
-							if (read_block_cntr < write_block_cntr)
+							if (read_block_cntr < write_block_cntr) {
 								send_logged_data();
+							} else {
+								write_block_cntr = START_BLOCK;
+							}
 							/* Get the RTC current Time */
 							HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
 							/* Get the RTC current Date */
@@ -355,6 +359,7 @@ void logging_hq_data()
 
 	printf("writing block\n");
 	write_block(write_block_cntr, &buffer_tx);
+	printf("write count %d", write_block_cntr);
 	write_block_cntr++;
 }
 
@@ -363,7 +368,7 @@ void send_logged_data()
 	float buffer_rx[128];
 	uint32_t read_10_blocks = read_block_cntr + BLOCKS_TO_SEND;
 	while (WIFI_SendData(socket, (uint8_t*)&hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK
-			&& WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK && read_block_cntr < read_10_blocks) {
+			&& WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK && read_block_cntr < read_10_blocks && read_block_cntr < write_block_cntr) {
 		printf("reading block\n");
 		read_block(read_block_cntr, &buffer_rx);
 
@@ -385,6 +390,7 @@ void send_logged_data()
 		hq_data.sensor_values[1] =	buffer_rx[9];
 		hq_data.sensor_values[2] = 	buffer_rx[10];
 
+		printf("read count :%d", read_block_cntr);
 		read_block_cntr++;
 
 		HAL_Delay(1000);
