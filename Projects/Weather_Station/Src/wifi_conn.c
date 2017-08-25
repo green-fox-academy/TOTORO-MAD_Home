@@ -104,7 +104,7 @@ uint8_t get_time_flag = 0;
 /* Private function prototypes -----------------------------------------------*/
 void error_handling(const char *error_string, uint8_t error_code);
 void logging_hq_data();
-void send_logged_data();
+void send_logged_hq_data();
 void load_buffer();
 /* Private functions ---------------------------------------------------------*/
 
@@ -262,7 +262,7 @@ void send_sensor_data()
 
 							/*Sending logged data */
 							if (read_block_cntr < write_block_cntr) {
-								send_logged_data();
+								send_logged_hq_data();
 							} else {
 								write_block_cntr = START_BLOCK;
 							}
@@ -336,7 +336,7 @@ void logging_hq_data()
 	write_block_cntr++;
 }
 
-void send_logged_data()
+void send_logged_hq_data()
 {
 	float buffer_rx[128];
 	uint32_t read_10_blocks = read_block_cntr + BLOCKS_TO_SEND;

@@ -176,6 +176,7 @@ WIFI_Status_t       WIFI_SendData(uint8_t socket, uint8_t *pdata, uint16_t Reqle
 WIFI_Status_t       WIFI_ReceiveData(uint8_t socket, uint8_t *pdata, uint16_t Reqlen, uint16_t *RcvDatalen, uint32_t Timeout);
 WIFI_Status_t       WIFI_StartClient(void);
 WIFI_Status_t       WIFI_StopClient(void);
+WIFI_Status_t 		wifi_set_timout(uint32_t timeout);
 
 WIFI_Status_t       WIFI_SetOEMProperties(const char *name, uint8_t *Mac);
 WIFI_Status_t       WIFI_ResetModule(void);
