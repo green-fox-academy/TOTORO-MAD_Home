@@ -42,16 +42,17 @@
 /* Private define ------------------------------------------------------------*/
 #define SSID     				"A66 Guest"
 #define PASSWORD 				"Hello123"
-#define SERVER_PORT 			8002
+#define SERVER_PORT 			8004
 #define WIFI_WRITE_TIMEOUT 		10000
 #define WIFI_READ_TIMEOUT  		10000
 #define CONNECTION_TRIAL_MAX    10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
 uint8_t remote_ip[] = {10, 27, 99, 50};
-char rx_data[3];
+uint8_t rx_data[5];
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
+uint8_t connection_counter = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -126,24 +127,31 @@ int main(void) {
 			int8_t socket = 0;
 			printf("Start TCP Server...\n");
 			while(WIFI_StartServer(socket, WIFI_TCP_PROTOCOL, "asd", SERVER_PORT) != WIFI_STATUS_OK);
+			connection_counter++;
 			printf("----------------------------------------- \n");
 			printf("TCP Server Started \n");
 			printf("receiving data...\n");
 			/*trying to connect to server and sending data when connected in every 10 seconds */
 			do {
 				if(datalen > 0) {
-					comm = atoi(rx_data);
-					printf("comm: %d\n", comm);
-					set_ac(comm);
+					if (rx_data[4] == 1) {
+						printf("comm: %d\n", rx_data[4]);
+						set_ac(31);
+					} else {
+						comm = rx_data[1] * 10 + rx_data[0];
+						printf("comm: %d\n", comm);
+						set_ac(comm);
+					}
 					datalen = 0;
 				}
-			} while (WIFI_ReceiveData(socket, &rx_data, sizeof(rx_data), &datalen, 0) == WIFI_STATUS_OK);
+			} while (WIFI_ReceiveData(socket, rx_data, sizeof(rx_data), &datalen, 0) == WIFI_STATUS_OK);
 			/*Closing socket when connection is lost or could'not connect */
 			printf("Closing the socket...\n");
 			WIFI_CloseClientConnection(socket);
 			WIFI_StopServer(socket);
-		} while (wifi_isconnected() == 1); //do-while
+		} while (wifi_isconnected() == 1 && connection_counter < 4); //do-while
 		/*If there might be a problem with pinging, disconnect from WIFI AP anyway */
+		connection_counter = 0;
 		printf("> Disconnected from WIFI!\n");
 		WIFI_Disconnect();
 	    }	//while (1)
