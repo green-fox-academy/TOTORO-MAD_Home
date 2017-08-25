@@ -105,6 +105,7 @@ uint8_t get_time_flag = 0;
 void error_handling(const char *error_string, uint8_t error_code);
 void logging_hq_data();
 void send_logged_data();
+void load_buffer();
 /* Private functions ---------------------------------------------------------*/
 
 void get_time()
@@ -252,20 +253,7 @@ void send_sensor_data()
 						HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
 
 						/*Loading time data into buffer for first send*/
-						hq_data.hq_time.tm_hour  = 	timestructureget.Hours;
-						hq_data.hq_time.tm_min   = 	timestructureget.Minutes;
-						hq_data.hq_time.tm_sec   = 	timestructureget.Seconds;
-						hq_data.hq_time.tm_isdst = 	timestructureget.DayLightSaving;
-						hq_data.hq_time.tm_year  = 	datestructureget.Year + YEAR_CORR;
-						hq_data.hq_time.tm_mon   =	datestructureget.Month - MONTH_CORR;
-						hq_data.hq_time.tm_mday  = 	datestructureget.Date;
-						hq_data.hq_time.tm_wday  = 	datestructureget.WeekDay + WEEKDAY_CORR;
-
-
-						/*Loading sensor data into buffer for first send*/
-						hq_data.sensor_values[0] = 	get_temperature();
-						hq_data.sensor_values[1] = 	get_humidity();
-						hq_data.sensor_values[2] = 	get_pressure();
+						load_buffer();
 
 						conn_flag = 0;
 
@@ -284,22 +272,7 @@ void send_sensor_data()
 							HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
 
 							/*Loading time data into buffer */
-							hq_data.hq_time.tm_hour  = 	timestructureget.Hours;
-							hq_data.hq_time.tm_min   = 	timestructureget.Minutes;
-							hq_data.hq_time.tm_sec   = 	timestructureget.Seconds;
-							hq_data.hq_time.tm_isdst = 	timestructureget.DayLightSaving;
-							hq_data.hq_time.tm_year  =	datestructureget.Year + YEAR_CORR;
-							hq_data.hq_time.tm_mon   = 	datestructureget.Month - MONTH_CORR;
-							hq_data.hq_time.tm_mday  = 	datestructureget.Date;
-							hq_data.hq_time.tm_wday  = 	datestructureget.WeekDay + WEEKDAY_CORR;
-
-							time_t time = mktime(&(hq_data.hq_time));
-							printf("TimeStamp: %s\n",ctime((const time_t*)&time));
-
-							/*Loading sensor data into buffer */
-							hq_data.sensor_values[0] = 	get_temperature();
-							hq_data.sensor_values[1] = 	get_humidity();
-							hq_data.sensor_values[2] = 	get_pressure();
+							load_buffer();
 
 							conn_flag = 1;
 
@@ -395,4 +368,25 @@ void send_logged_data()
 
 		HAL_Delay(1000);
 	}
+}
+
+void load_buffer()
+{
+	/*Loading time data into buffer */
+	hq_data.hq_time.tm_hour  = 	timestructureget.Hours;
+	hq_data.hq_time.tm_min   = 	timestructureget.Minutes;
+	hq_data.hq_time.tm_sec   = 	timestructureget.Seconds;
+	hq_data.hq_time.tm_isdst = 	timestructureget.DayLightSaving;
+	hq_data.hq_time.tm_year  =	datestructureget.Year + YEAR_CORR;
+	hq_data.hq_time.tm_mon   = 	datestructureget.Month - MONTH_CORR;
+	hq_data.hq_time.tm_mday  = 	datestructureget.Date;
+	hq_data.hq_time.tm_wday  = 	datestructureget.WeekDay + WEEKDAY_CORR;
+
+	time_t time = mktime(&(hq_data.hq_time));
+	printf("TimeStamp: %s\n",ctime((const time_t*)&time));
+
+	/*Loading sensor data into buffer */
+	hq_data.sensor_values[0] = 	get_temperature();
+	hq_data.sensor_values[1] = 	get_humidity();
+	hq_data.sensor_values[2] = 	get_pressure();
 }
