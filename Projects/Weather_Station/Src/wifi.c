@@ -412,6 +412,21 @@ WIFI_Status_t WIFI_ReceiveData(uint8_t socket, uint8_t *pdata, uint16_t Reqlen, 
 }
 
 /**
+  * @brief  Change default Timeout.
+  * @param  Obj: pointer to module handle
+  * @param  Timeout: Timeout in mS
+  * @retval Operation Status.
+  */
+
+WIFI_Status_t wifi_set_timout(uint32_t timeout)
+{
+	WIFI_Status_t ret = WIFI_STATUS_ERROR;
+
+	ret = ES_WIFI_SetTimeout(&EsWifiObj, timeout);
+	return WIFI_STATUS_OK;
+}
+
+/**
   * @brief  Customize module data
   * @param  name : MFC name
   * @param  Mac :  Mac Address

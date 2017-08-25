@@ -61,6 +61,9 @@ typedef struct hq_data {
 #define YEAR_CORR				100
 #define MONTH_CORR				1
 #define WEEKDAY_CORR			3
+#define START_BLOCK 			0xFFFF
+#define BLOCKS_TO_SEND			10
+
 /* NTP server definitions*/
 #define PACKET_LENGHT			48								//NTP packet lengths in bytes
 #define NTP_TIMESTAMP_DELTA 	2208988800ull					//70 years in seconds
@@ -80,6 +83,8 @@ int8_t socket = 1;
 uint16_t datalen;
 uint8_t conn_flag;
 hq_data_t hq_data;
+uint32_t write_block_cntr;
+uint32_t read_block_cntr;
 
 /* RTC variables */
 extern RTC_HandleTypeDef RtcHandle;
@@ -98,6 +103,8 @@ uint8_t get_time_flag = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 void error_handling(const char *error_string, uint8_t error_code);
+void logging_hq_data();
+void send_logged_data();
 /* Private functions ---------------------------------------------------------*/
 
 void get_time()
@@ -191,40 +198,24 @@ void send_sensor_data()
 
 				/*Waiting for connection with WIFI AP */
 				printf("> Trying to connect to %s.\n", SSID);
-				  float buffertx[128];
+				  float buffer_tx[128];
 				  for (int i = 0; i < 128; i++) {
-					  buffertx [i] = i;
+					  buffer_tx [i] = i;
 				  }
-				  printf("%f buff\n", buffertx[12]);
+				  printf("%f buff\n", buffer_tx[12]);
 				  printf("writing block\n");
 
-				  printf("write block ret%d\n", write_block(0xFFFF, &buffertx));
+				  printf("write block ret%d\n", write_block(0xFFFF, &buffer_tx));
 				  float bufferrx[128];
 				  printf("reading block\n");
 				  read_block(0xFFFF, &bufferrx);
 				  printf("%f %f\n", bufferrx[12], bufferrx[24]);
 				while (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK) {
-					uint32_t block_cntr = 0xFFFF;
+
+					/*Start to log after first connection with NTP server */
+					write_block_cntr = START_BLOCK;
 					if (get_time_flag == 1) {
-						float buffertx[128];
-						/*Loading time data into buffer for first send*/
-						buffertx[0] = timestructureget.Hours;
-						buffertx[1] = timestructureget.Minutes;
-						buffertx[2] = timestructureget.Seconds;
-						buffertx[3] = timestructureget.DayLightSaving;
-						buffertx[4] = datestructureget.Year + YEAR_CORR;
-						buffertx[5] = datestructureget.Month - MONTH_CORR;
-						buffertx[6] = datestructureget.Date;
-						buffertx[7] = datestructureget.WeekDay + WEEKDAY_CORR;
-
-
-						/*Loading sensor data into buffer for first send*/
-						buffertx[0] = get_temperature();
-						buffertx[1] = get_humidity();
-						buffertx[2] = get_pressure();
-						printf("writing block\n");
-						write_block(block_cntr, &buffertx);
-						block_cntr++;
+						logging_hq_data();
 					}
 				}
 				/*Getting IP Address */
@@ -239,6 +230,7 @@ void send_sensor_data()
 					get_time();
 
 					/*checking connection with WIFI AP */
+					read_block_cntr = START_BLOCK;
 					do {
 						printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
 								remote_ip[0],
@@ -250,53 +242,60 @@ void send_sensor_data()
 						socket = 1;
 						while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 10) != WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK);
 
+						/*Continues logging while trying to connect to to server */
+						logging_hq_data();
+
 						/* Get the RTC current Time */
 						HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
 						/* Get the RTC current Date */
 						HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
 
 						/*Loading time data into buffer for first send*/
-						hq_data.hq_time.tm_hour = timestructureget.Hours;
-						hq_data.hq_time.tm_min = timestructureget.Minutes;
-						hq_data.hq_time.tm_sec = timestructureget.Seconds;
-						hq_data.hq_time.tm_isdst = timestructureget.DayLightSaving;
-						hq_data.hq_time.tm_year = datestructureget.Year + YEAR_CORR;
-						hq_data.hq_time.tm_mon = datestructureget.Month - MONTH_CORR;
-						hq_data.hq_time.tm_mday = datestructureget.Date;
-						hq_data.hq_time.tm_wday = datestructureget.WeekDay + WEEKDAY_CORR;
+						hq_data.hq_time.tm_hour  = 	timestructureget.Hours;
+						hq_data.hq_time.tm_min   = 	timestructureget.Minutes;
+						hq_data.hq_time.tm_sec   = 	timestructureget.Seconds;
+						hq_data.hq_time.tm_isdst = 	timestructureget.DayLightSaving;
+						hq_data.hq_time.tm_year  = 	datestructureget.Year + YEAR_CORR;
+						hq_data.hq_time.tm_mon   =	datestructureget.Month - MONTH_CORR;
+						hq_data.hq_time.tm_mday  = 	datestructureget.Date;
+						hq_data.hq_time.tm_wday  = 	datestructureget.WeekDay + WEEKDAY_CORR;
 
 
 						/*Loading sensor data into buffer for first send*/
-						hq_data.sensor_values[0] = get_temperature();
-						hq_data.sensor_values[1] = get_humidity();
-						hq_data.sensor_values[2] = get_pressure();
+						hq_data.sensor_values[0] = 	get_temperature();
+						hq_data.sensor_values[1] = 	get_humidity();
+						hq_data.sensor_values[2] = 	get_pressure();
 
 						conn_flag = 0;
 
 						/*Sending data when connected in every 10 seconds */
 						while (WIFI_SendData(socket, (uint8_t*)&hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK) {
+
+							/*Sending logged data */
+							if (read_block_cntr < write_block_cntr)
+								send_logged_data();
 							/* Get the RTC current Time */
 							HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
 							/* Get the RTC current Date */
 							HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
 
 							/*Loading time data into buffer */
-							hq_data.hq_time.tm_hour = timestructureget.Hours;
-							hq_data.hq_time.tm_min = timestructureget.Minutes;
-							hq_data.hq_time.tm_sec = timestructureget.Seconds;
-							hq_data.hq_time.tm_isdst = timestructureget.DayLightSaving;
-							hq_data.hq_time.tm_year = datestructureget.Year + YEAR_CORR;
-							hq_data.hq_time.tm_mon = datestructureget.Month - MONTH_CORR;
-							hq_data.hq_time.tm_mday = datestructureget.Date;
-							hq_data.hq_time.tm_wday = datestructureget.WeekDay + WEEKDAY_CORR;
+							hq_data.hq_time.tm_hour  = 	timestructureget.Hours;
+							hq_data.hq_time.tm_min   = 	timestructureget.Minutes;
+							hq_data.hq_time.tm_sec   = 	timestructureget.Seconds;
+							hq_data.hq_time.tm_isdst = 	timestructureget.DayLightSaving;
+							hq_data.hq_time.tm_year  =	datestructureget.Year + YEAR_CORR;
+							hq_data.hq_time.tm_mon   = 	datestructureget.Month - MONTH_CORR;
+							hq_data.hq_time.tm_mday  = 	datestructureget.Date;
+							hq_data.hq_time.tm_wday  = 	datestructureget.WeekDay + WEEKDAY_CORR;
 
 							time_t time = mktime(&(hq_data.hq_time));
 							printf("TimeStamp: %s\n",ctime((const time_t*)&time));
 
 							/*Loading sensor data into buffer */
-							hq_data.sensor_values[0] = get_temperature();
-							hq_data.sensor_values[1] = get_humidity();
-							hq_data.sensor_values[2] = get_pressure();
+							hq_data.sensor_values[0] = 	get_temperature();
+							hq_data.sensor_values[1] = 	get_humidity();
+							hq_data.sensor_values[2] = 	get_pressure();
 
 							conn_flag = 1;
 
@@ -328,4 +327,66 @@ void error_handling(const char *error_string, uint8_t error_code)
 {
 	printf("Error: %s Error code: %d\n", error_string, error_code);
 	BSP_LED_On(LED2);
+}
+
+void logging_hq_data()
+{
+	/* Get the RTC current Time */
+	HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
+	/* Get the RTC current Date */
+	HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
+
+	float buffer_tx[128];
+	/*Loading time data into buffer for first send*/
+	buffer_tx[0] = timestructureget.Hours;
+	buffer_tx[1] = timestructureget.Minutes;
+	buffer_tx[2] = timestructureget.Seconds;
+	buffer_tx[3] = timestructureget.DayLightSaving;
+	buffer_tx[4] = datestructureget.Year + YEAR_CORR;
+	buffer_tx[5] = datestructureget.Month - MONTH_CORR;
+	buffer_tx[6] = datestructureget.Date;
+	buffer_tx[7] = datestructureget.WeekDay + WEEKDAY_CORR;
+
+
+	/*Loading sensor data into buffer for first send*/
+	buffer_tx[8] = get_temperature();
+	buffer_tx[9] = get_humidity();
+	buffer_tx[10] = get_pressure();
+
+	printf("writing block\n");
+	write_block(write_block_cntr, &buffer_tx);
+	write_block_cntr++;
+}
+
+void send_logged_data()
+{
+	float buffer_rx[128];
+	uint32_t read_10_blocks = read_block_cntr + BLOCKS_TO_SEND;
+	while (WIFI_SendData(socket, (uint8_t*)&hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK
+			&& WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK && read_block_cntr < read_10_blocks) {
+		printf("reading block\n");
+		read_block(read_block_cntr, &buffer_rx);
+
+		/*Loading time data into buffer */
+		hq_data.hq_time.tm_hour  = 	buffer_rx[0];
+		hq_data.hq_time.tm_min 	 = 	buffer_rx[1];
+		hq_data.hq_time.tm_sec 	 = 	buffer_rx[2];
+		hq_data.hq_time.tm_isdst =	buffer_rx[3];
+		hq_data.hq_time.tm_year  = 	buffer_rx[4];
+		hq_data.hq_time.tm_mon   = 	buffer_rx[5];
+		hq_data.hq_time.tm_mday  = 	buffer_rx[6];
+		hq_data.hq_time.tm_wday	 = 	buffer_rx[7];
+
+		time_t time = mktime(&(hq_data.hq_time));
+		printf("TimeStamp logged: %s\n",ctime((const time_t*)&time));
+
+		/*Loading sensor data into buffer */
+		hq_data.sensor_values[0] = 	buffer_rx[8];
+		hq_data.sensor_values[1] =	buffer_rx[9];
+		hq_data.sensor_values[2] = 	buffer_rx[10];
+
+		read_block_cntr++;
+
+		HAL_Delay(1000);
+	}
 }

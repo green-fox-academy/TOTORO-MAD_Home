@@ -56,6 +56,7 @@
 #include "wifi_conn.h"
 
 #include <stdio.h>
+#include "sd_card.h"
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Defines related to Clock configuration */
