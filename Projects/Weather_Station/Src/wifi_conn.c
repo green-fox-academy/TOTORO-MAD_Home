@@ -199,20 +199,6 @@ void send_sensor_data()
 
 				/*Waiting for connection with WIFI AP */
 				printf("> Trying to connect to %s.\n", SSID);
-//				  float buffer_tx[128];
-//				  for (int i = 0; i < 128; i++) {
-//					  buffer_tx [i] = i;
-//				  }
-//				  printf("%f buff\n", buffer_tx[12]);
-//				  printf("writing block\n");
-//
-//				  printf("write block ret%d\n", write_block(0xFFFF, &buffer_tx));
-//				  float bufferrx[128];
-//				  printf("reading block\n");
-//				  read_block(0xFFFF, &bufferrx);
-//				  printf("%f %f\n", bufferrx[12], bufferrx[24]);
-//
-
 				while (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK) {
 
 					/*Start to log after first connection with NTP server */
@@ -231,8 +217,8 @@ void send_sensor_data()
 					/*Getting online time for TimeStamp*/
 					get_time();
 
-					/*checking connection with WIFI AP */
 					read_block_cntr = START_BLOCK;
+					/*Checking connection with WIFI AP */
 					do {
 						printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
 								remote_ip[0],
@@ -252,7 +238,7 @@ void send_sensor_data()
 						/* Get the RTC current Date */
 						HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
 
-						/*Loading time data into buffer for first send*/
+						/*Loading data into buffer for first send*/
 						load_buffer();
 
 						conn_flag = 0;
@@ -271,7 +257,7 @@ void send_sensor_data()
 							/* Get the RTC current Date */
 							HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
 
-							/*Loading time data into buffer */
+							/*Loading data into buffer */
 							load_buffer();
 
 							conn_flag = 1;
@@ -314,7 +300,7 @@ void logging_hq_data()
 	HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
 
 	float buffer_tx[128];
-	/*Loading time data into buffer for first send*/
+	/*Loading time data into buffer*/
 	buffer_tx[0] = timestructureget.Hours;
 	buffer_tx[1] = timestructureget.Minutes;
 	buffer_tx[2] = timestructureget.Seconds;
@@ -325,14 +311,13 @@ void logging_hq_data()
 	buffer_tx[7] = datestructureget.WeekDay + WEEKDAY_CORR;
 
 
-	/*Loading sensor data into buffer for first send*/
+	/*Loading sensor data into buffer*/
 	buffer_tx[8] = get_temperature();
 	buffer_tx[9] = get_humidity();
 	buffer_tx[10] = get_pressure();
 
-	printf("writing block\n");
 	write_block(write_block_cntr, &buffer_tx);
-	printf("write count %d", write_block_cntr);
+	printf("writing block %x\n", write_block_cntr);
 	write_block_cntr++;
 }
 
@@ -342,7 +327,6 @@ void send_logged_hq_data()
 	uint32_t read_10_blocks = read_block_cntr + BLOCKS_TO_SEND;
 	while (WIFI_SendData(socket, (uint8_t*)&hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK
 			&& WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK && read_block_cntr < read_10_blocks && read_block_cntr < write_block_cntr) {
-		printf("reading block\n");
 		read_block(read_block_cntr, &buffer_rx);
 
 		/*Loading time data into buffer */
@@ -363,7 +347,7 @@ void send_logged_hq_data()
 		hq_data.sensor_values[1] =	buffer_rx[9];
 		hq_data.sensor_values[2] = 	buffer_rx[10];
 
-		printf("read count :%d", read_block_cntr);
+		printf("reading block :%x\n", read_block_cntr);
 		read_block_cntr++;
 
 		HAL_Delay(1000);
