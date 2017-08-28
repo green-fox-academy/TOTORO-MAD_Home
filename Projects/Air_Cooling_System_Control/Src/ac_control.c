@@ -263,12 +263,19 @@ const uint16_t onoff[] = {4709, 2620, 367, 408, 326, 982, 367, 982, 326, 408, 36
 
 /* PWM variables */
 extern TIM_HandleTypeDef tim_pwm_handle;
+extern TIM_OC_InitTypeDef pwm_conf;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
 void send_signal(const uint16_t *array)
 {
 	for (int i = 0; i < COMMAND_SIZE; i = i + 2) {
+		pwm_conf.Pulse = 0;
+		HAL_TIM_PWM_ConfigChannel(&tim_pwm_handle, &pwm_conf, TIM_CHANNEL_1);
+		HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
+		delay(26);
+		pwm_conf.Pulse = 50;
+		HAL_TIM_PWM_ConfigChannel(&tim_pwm_handle, &pwm_conf, TIM_CHANNEL_1);
 		HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
 		delay(array[i]);
 		HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
