@@ -313,7 +313,7 @@ extern TIM_HandleTypeDef tim_pwm_handle;
 
 void send_signal(const uint16_t *array)
 {
-	for (int i = 0; i < COMMAND_SIZE; i=i+2) {
+	for (int i = 0; i < COMMAND_SIZE; i = i+2) {
 		HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
 		delay(array[i]);
 		HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);

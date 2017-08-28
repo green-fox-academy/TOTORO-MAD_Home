@@ -114,7 +114,7 @@ void delay(uint16_t delay_value)
 void pwm_init()
 {
 	/* Compute the prescaler value to have TIM3 counter clock equal to 40000 Hz */
-	uint8_t prescalervalue = 18;
+	uint8_t prescalervalue = 20;
 
 	/* Set TIM3 instance */
 	tim_pwm_handle.Instance = TIM3;
