@@ -6,4 +6,4 @@
 
 uint16_t correction(uint16_t diff);
 
-char filling_binary(uint16_t diff);
+uint8_t filling_binary(uint16_t diff);

@@ -7,7 +7,7 @@
 #define NUMBER_OF_FILES         16
 #define MULTIPLIER              1000
 #define EDGE_CORRECTION         40
-#define NUMBERS_IN_A_ROW        16
+#define NUMBERS_IN_A_ROW        36
 #define VOLT_DIFF_THRESHOLD     1.5
 #define BUFFER_SIZE             50
 #define NUMBER_OF_DATA          268
@@ -75,12 +75,12 @@ int main()
                         //difference = correction(difference);
 
                         if (high_or_low == 1)
-                            fprintf(bin_codes, "%c", filling_binary(difference));
+                            fprintf(bin_codes, "%d", filling_binary(difference));
 
-                        if (data_counter != NUMBER_OF_DATA - 1)
-                            fprintf(text_files[i], "%d, ", difference);
-                        else
-                            fprintf(text_files[i], "%d};", difference);
+                        if (data_counter != NUMBER_OF_DATA - 1 && high_or_low == 1)
+                            fprintf(text_files[i], "%d, ", filling_binary(difference));
+                        else if (high_or_low == 1)
+                            fprintf(text_files[i], "%d};", filling_binary(difference));
 
                         new_line++;
                         data_counter++;
