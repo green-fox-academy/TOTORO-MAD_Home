@@ -195,6 +195,53 @@ const uint16_t degree_25[] = {4668, 2579, 449, 326,
 		326, 408, 326, 449, 326, 408, 326, 408, 367, 408, 326, 408, 326, 449, 326, 408,
 		326, 408, 367, 367, 367, 20151, 4627, 11426};
 
+const uint8_t degree_26[] = {2, 0, 1, 1, 0, 1, 0, 0, 0, 0,
+		1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0,
+		0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+		0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+		0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2};
+
+const uint8_t degree_27[] = {2, 0,
+		1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1,
+		0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1,
+		0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0,
+		0, 0, 0, 0, 0, 1, 1, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 2, 2};
+
+const uint8_t degree_28[] = {2, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0,
+		0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0,
+		1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+		0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2,
+		2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2};
+
+const uint8_t degree_29[] = {2, 0, 1, 1,
+		0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1,
+		1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+		0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0,
+		0, 0, 0, 1, 0, 1, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 2, 2};
+
+const uint8_t degree_30[] = {2, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1,
+		0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0,
+		0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+		0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 2, 2, 2,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2};
+
 const uint16_t onoff[] = {4709, 2620, 367, 408, 326, 982, 367, 982, 326, 408, 367, 982,
 		326, 408, 367, 408, 326, 408, 367, 408, 326, 982, 367, 408, 326, 408, 367, 982,
 		326, 408, 367, 408, 326, 408, 367, 408, 326, 408, 367, 408, 326, 408, 326, 1023,
@@ -213,10 +260,6 @@ const uint16_t onoff[] = {4709, 2620, 367, 408, 326, 982, 367, 982, 326, 408, 36
 		326, 408, 367, 408, 326, 408, 367, 408, 326, 408, 326, 408, 367, 408, 326, 408,
 		367, 408, 326, 408, 367, 408, 326, 408, 367, 408, 326, 408, 326, 20151, 4668, 15318};
 
-const uint8_t degree_26[] = {X, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1,
-		0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-		0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, X, X, X, 0000000000000000000000000000000000000000000000000000000000000000XX
-};
 
 /* PWM variables */
 extern TIM_HandleTypeDef tim_pwm_handle;
@@ -225,13 +268,66 @@ extern TIM_HandleTypeDef tim_pwm_handle;
 
 void send_signal(const uint16_t *array)
 {
-	for (int i = 0; i < COMMAND_SIZE; i = i+2) {
+	for (int i = 0; i < COMMAND_SIZE; i = i + 2) {
 		HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
 		delay(array[i]);
 		HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
 		delay(array[(i+1)]);
 	}
 }
+
+void make_signal(const uint8_t *array)
+{
+	uint8_t counter = 1;
+	for (int i = 0; i < (COMMAND_SIZE / 2); i++) {
+		if (array[i] == 0) {
+			HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
+			delay(360);
+			HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
+			delay(410);
+		} else if (array[i] == 1) {
+			HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
+			delay(360);
+			HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
+			delay(980);
+		} else if (array[i] == 2) {
+			switch (itoa(counter)) {
+			case '1':
+				HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
+				delay(4700);
+				HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
+				delay(2580);
+				break;
+			case '2':
+				HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
+				delay(360);
+				HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
+				delay(20150);
+				break;
+			case '3':
+				HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
+				delay(4700);
+				HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
+				delay(9300);
+				break;
+			case '4':
+				HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
+				delay(360);
+				HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
+				delay(20150);
+				break;
+			case '5':
+				HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
+				delay(4700);
+				HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
+				break;
+			default:
+				break;
+			} //switch
+		} //else
+		counter++;
+	} //for
+} //function
 
 void set_ac(uint8_t command)
 {
@@ -269,19 +365,19 @@ void set_ac(uint8_t command)
 		send_signal(degree_25);
 	    break;
 	case 26:
-		send_signal(degree_26);
+		make_signal(degree_26);
 	    break;
 	case 27:
-		send_signal(degree_27);
+		make_signal(degree_27);
 	    break;
 	case 28:
-		send_signal(degree_28);
+		make_signal(degree_28);
 	    break;
 	case 29:
-		send_signal(degree_29);
+		make_signal(degree_29);
 	    break;
 	case 30:
-		send_signal(degree_30);
+		make_signal(degree_30);
 	    break;
 	case 31:
 		send_signal(onoff);
