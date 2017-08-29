@@ -140,8 +140,8 @@ void pwm_init()
 	pwm_conf.OCFastMode = TIM_OCFAST_DISABLE;
 	pwm_conf.OCIdleState = TIM_OCIDLESTATE_RESET;
 	pwm_conf.OCMode = TIM_OCMODE_PWM1;
-	pwm_conf.OCPolarity = TIM_OCPOLARITY_HIGH;
-	pwm_conf.Pulse = 50;
+	pwm_conf.OCPolarity = TIM_OCPOLARITY_LOW;
+	pwm_conf.Pulse = 100;
 
 	/* Set the pulse value for channel 1 */
 	if (HAL_TIM_PWM_ConfigChannel(&tim_pwm_handle, &pwm_conf, TIM_CHANNEL_1) != HAL_OK)
@@ -149,6 +149,7 @@ void pwm_init()
 		/* Configuration Error */
 		error_handling("TIM PWM channel configuration has failed!", HAL_ERROR);
 	}
+	HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
 }
 
 void error_handling(const char *error_string, uint8_t error_code)

@@ -270,15 +270,11 @@ extern TIM_OC_InitTypeDef pwm_conf;
 void send_signal(const uint16_t *array)
 {
 	for (int i = 0; i < COMMAND_SIZE; i = i + 2) {
-		pwm_conf.Pulse = 0;
-		HAL_TIM_PWM_ConfigChannel(&tim_pwm_handle, &pwm_conf, TIM_CHANNEL_1);
-		HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
-		delay(26);
-		pwm_conf.Pulse = 50;
-		HAL_TIM_PWM_ConfigChannel(&tim_pwm_handle, &pwm_conf, TIM_CHANNEL_1);
-		HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
+		tim_pwm_handle.Instance->CCR1 = 0;
+		delay(13);
+		tim_pwm_handle.Instance->CCR1 = 50;
 		delay(array[i]);
-		HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
+		tim_pwm_handle.Instance->CCR1 = 100;
 		delay(array[(i+1)]);
 	}
 }
