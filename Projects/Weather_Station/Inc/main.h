@@ -55,6 +55,9 @@
 #include "wifi.h"
 #include "wifi_conn.h"
 
+/* External sensor component */
+#include "i2c.h"
+
 #include <stdio.h>
 #include "sd_card.h"
 /* Exported types ------------------------------------------------------------*/
