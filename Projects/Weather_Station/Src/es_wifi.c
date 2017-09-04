@@ -898,32 +898,28 @@ ES_WIFI_Status_t ES_WIFI_ActivateAP(ES_WIFIObject_t *Obj, ES_WIFI_APConfig_t *Ap
   ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
   if(ret == ES_WIFI_STATUS_OK)
   {
-  
     sprintf((char*)Obj->CmdData,"A1=%c\r", (int)ApConfig->Security + '0');
     ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
     if(ret == ES_WIFI_STATUS_OK)
     {
-      
       sprintf((char*)Obj->CmdData,"A2=%s\r", ApConfig->Pass);
       ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
       if(ret == ES_WIFI_STATUS_OK)
       { 
-        
         sprintf((char*)Obj->CmdData,"AC=%d\r", ApConfig->Channel);
         ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
         if(ret == ES_WIFI_STATUS_OK)
         { 
-          
           sprintf((char*)Obj->CmdData,"AT=%d\r", ApConfig->MaxConnections);
           ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
           if(ret == ES_WIFI_STATUS_OK)
-          { 
-            sprintf((char*)Obj->CmdData,"A0\r");
+          {
+            sprintf((char*)Obj->CmdData,"AD\r");
             ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);             
             if(ret == ES_WIFI_STATUS_OK)
             { 
               if(strstr((char *)Obj->CmdData, "[AP     ]"))
-              {           
+              {
                 ret = ES_WIFI_STATUS_OK;
               }       
             }            

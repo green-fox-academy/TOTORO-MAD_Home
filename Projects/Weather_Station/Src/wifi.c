@@ -206,7 +206,7 @@ WIFI_Status_t WIFI_ConfigureAP(uint8_t *ssid, uint8_t *pass, WIFI_Ecn_t ecn, uin
 {
   WIFI_Status_t ret = WIFI_STATUS_ERROR;  
   ES_WIFI_APConfig_t ApConfig;
-  
+
   strncpy((char*)ApConfig.SSID, (char*)ssid, ES_WIFI_MAX_SSID_NAME_SIZE);
   strncpy((char*)ApConfig.Pass, (char*)pass, ES_WIFI_MAX_PSWD_NAME_SIZE);
   ApConfig.Channel = channel;
@@ -423,7 +423,7 @@ WIFI_Status_t wifi_set_timout(uint32_t timeout)
 	WIFI_Status_t ret = WIFI_STATUS_ERROR;
 
 	ret = ES_WIFI_SetTimeout(&EsWifiObj, timeout);
-	return WIFI_STATUS_OK;
+	return ret;
 }
 
 /**

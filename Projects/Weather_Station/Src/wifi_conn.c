@@ -52,8 +52,11 @@ typedef struct hq_data {
 
 /* Private define ------------------------------------------------------------*/
 /* WIFI connection data */
-#define SSID     				"HUAWEI-B206"
+#define SSID_CON     			"HUAWEI-B206"
 #define PASSWORD 				"47213979"
+#define MAX_APS					10
+#define AP_CHA					0								//Auto channel
+#define AP_MAX_CONN				1
 
 /*TCP client definitions */
 #define SERVER_PORT 			8005
@@ -85,6 +88,10 @@ uint8_t conn_flag;
 hq_data_t hq_data;
 uint32_t write_block_cntr = START_BLOCK;
 uint32_t read_block_cntr  = START_BLOCK;
+WIFI_APs_t aps;
+uint8_t ap_ssid[] = "STM32L4-IOT";
+uint8_t ap_pass[] = "iot12345";
+extern ES_WIFIObject_t EsWifiObj;
 
 /* RTC variables */
 extern RTC_HandleTypeDef RtcHandle;
@@ -108,6 +115,44 @@ void send_logged_hq_data();
 void load_buffer();
 /* Private functions ---------------------------------------------------------*/
 
+void set_wifi_conn()
+{
+	while (1) {
+		printf("Creating Wifi Access Point...\n");
+		if (WIFI_ConfigureAP(ap_ssid, ap_pass, WIFI_ECN_WPA2_PSK, AP_CHA, AP_MAX_CONN) == WIFI_STATUS_OK) {
+			printf("Wifi AP has been created, waiting for device to join!\n");
+			if (WIFI_HandleAPEvents(&(EsWifiObj.APSettings)) == WIFI_STATUS_ASSIGNED
+					|| WIFI_STATUS_JOINED) {
+				printf("> The assigned IP Address : %d.%d.%d.%d\n",
+					EsWifiObj.APSettings.IP_Addr[0],
+					EsWifiObj.APSettings.IP_Addr[1],
+					EsWifiObj.APSettings.IP_Addr[2],
+					EsWifiObj.APSettings.IP_Addr[3]);
+		        printf("> The assigned MAC Address : %X:%X:%X:%X:%X:%X\n",
+		        	EsWifiObj.APSettings.MAC_Addr[0],
+					EsWifiObj.APSettings.MAC_Addr[1],
+					EsWifiObj.APSettings.MAC_Addr[2],
+					EsWifiObj.APSettings.MAC_Addr[3],
+					EsWifiObj.APSettings.MAC_Addr[4],
+					EsWifiObj.APSettings.MAC_Addr[5]);
+		        printf("> The assigned SSID :%s\n", (char*)ap_ssid);
+			} else {
+				error_handling("> ERROR : Device CANNOT be assigned!\n", WIFI_STATUS_ERROR);
+			}
+			//while (WIFI_HandleAPEvents(&(EsWifiObj.APSettings)) != WIFI_STATUS_JOINED);
+			printf("Device has been joined to Wifi AP!\n");
+
+
+		} else {
+			error_handling("> ERROR : CANNOT create Wifi AP\n", WIFI_STATUS_ERROR);
+		}
+		WIFI_ListAccessPoints(&aps, MAX_APS);
+		for (int i = 0; i < aps.count; i++) {
+			printf("WIFI APs list %s\n", aps.ap[i].SSID);
+		}
+	}
+}
+
 void get_time()
 {
 	/* Zero out the packet. All 48 bytes worth*/
@@ -119,7 +164,7 @@ void get_time()
 	*((char*)&packet + 0) = 0x1b;
 
 	/*Checks if packet contains passed seconds*/
-	while (packet.txTm_s == 0) {
+	while (packet.txTm_s == 0 && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK) {
 		/* Convert URL to IP */
 		if (WIFI_GetHostAddress(host_name, host_ip_addr) == WIFI_STATUS_OK) {
 			printf("> connecting to IP Address : %d.%d.%d.%d\n",
@@ -139,6 +184,25 @@ void get_time()
 
 						if (WIFI_CloseClientConnection(ntp_socket) == WIFI_STATUS_OK) {
 							printf("Client socket has been closed!\n");
+							/* These two fields contain the time-stamp seconds as the packet left the NTP server.
+							 * The number of seconds correspond to the seconds passed since 1900 NTOHL() converts the bit/byte order from the network's to host's "endianness".
+							 */
+							packet.txTm_s = NTOHL(packet.txTm_s);
+							packet.txTm_f = NTOHL(packet.txTm_f);
+
+						   /* Extract the 32 bits that represent the time-stamp seconds (since NTP epoch) from when the packet left the server.
+						    * Subtract 70 years worth of seconds from the seconds since 1900.
+						    * This leaves the seconds since the UNIX epoch of 1970.
+						    * (1900)------------------(1970)**************************************(Time Packet Left the Server)
+						    * Plus 2 hours to get Budapest local time */
+						   time_t txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA + UTC_PLUS_2);
+
+						   /* Load time data to structure for RTC initialization */
+						   rtc_data = gmtime((const time_t*)&txTm);
+
+						   /* RTC initialization */
+						   rtc_init();
+						   get_time_flag = 1;
 
 						} else {
 							error_handling("> ERROR : CANNOT close client socket\n", WIFI_STATUS_ERROR);
@@ -160,25 +224,6 @@ void get_time()
 			error_handling("> ERROR : CANNOT get NTP server IP address\n", WIFI_STATUS_ERROR);
 		}
 	}
-	/* These two fields contain the time-stamp seconds as the packet left the NTP server.
-	 * The number of seconds correspond to the seconds passed since 1900 NTOHL() converts the bit/byte order from the network's to host's "endianness".
-	 */
-	packet.txTm_s = NTOHL(packet.txTm_s);
-	packet.txTm_f = NTOHL(packet.txTm_f);
-
-   /* Extract the 32 bits that represent the time-stamp seconds (since NTP epoch) from when the packet left the server.
-    * Subtract 70 years worth of seconds from the seconds since 1900.
-    * This leaves the seconds since the UNIX epoch of 1970.
-    * (1900)------------------(1970)**************************************(Time Packet Left the Server)
-    * Plus 2 hours to get Budapest local time */
-   time_t txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA + UTC_PLUS_2);
-
-   /* Load time data to structure for RTC initialization */
-   rtc_data = gmtime((const time_t*)&txTm);
-
-   /* RTC initialization */
-   rtc_init();
-   get_time_flag = 1;
 }
 void send_sensor_data()
 {
@@ -197,9 +242,10 @@ void send_sensor_data()
 					   mac_addr[4],
 					   mac_addr[5]);
 
+				set_wifi_conn();
 				/*Waiting for connection with WIFI AP */
-				printf("> Trying to connect to %s.\n", SSID);
-				while (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK) {
+				printf("> Trying to connect to %s.\n", aps.ap[0].SSID);
+				while (WIFI_Connect(aps.ap[0].SSID, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK) {
 
 					/*Start to log after first connection with NTP server */
 					if (get_time_flag == 1) {
