@@ -257,6 +257,14 @@ WIFI_Status_t WIFI_HandleAPEvents(WIFI_APSettings_t *setting)
   return ret;
 }
 
+WIFI_Status_t wifi_show_settings(uint8_t *ssid, uint8_t *pass)
+{
+	WIFI_Status_t ret = WIFI_STATUS_ERROR;
+	printf("hello");
+	ret = es_wifi_show_settings(&EsWifiObj, ssid, pass);
+	return ret;
+}
+
 /**
   * @brief  Ping an IP address in the network
   * @param  ipaddr : array of the IP address

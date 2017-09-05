@@ -73,6 +73,7 @@ static void AT_ParseUARTConfig(char *pdata, ES_WIFI_UARTConfig_t *pConfig);
 static void AT_ParseSystemConfig(char *pdata, ES_WIFI_SystemConfig_t *pConfig);
 static void AT_ParseConnSettings(char *pdata, ES_WIFI_Network_t *NetSettings);
 static ES_WIFI_Status_t AT_ExecuteCommand(ES_WIFIObject_t *Obj, uint8_t* cmd, uint8_t *pdata);
+ES_WIFI_Status_t execute_command(ES_WIFIObject_t *Obj, uint8_t* cmd, uint8_t *pdata, uint8_t *ssid, uint8_t *pass);
 
 /* Private functions ---------------------------------------------------------*/
 /**
@@ -504,6 +505,7 @@ static void AT_ParseConnSettings(char *pdata, ES_WIFI_Network_t *NetSettings)
 static ES_WIFI_Status_t AT_ExecuteCommand(ES_WIFIObject_t *Obj, uint8_t* cmd, uint8_t *pdata)
 {
   if(Obj->fops.IO_Send(cmd, strlen((char*)cmd), Obj->Timeout) > 0)
+	  printf("%s", cmd);
   {
     int16_t n=Obj->fops.IO_Receive(pdata, 0, Obj->Timeout);
     if(n > 0)
@@ -511,12 +513,39 @@ static ES_WIFI_Status_t AT_ExecuteCommand(ES_WIFIObject_t *Obj, uint8_t* cmd, ui
       *(pdata+n)=0;
       if(strstr((char *)pdata, AT_OK_STRING))
       {
+    	  printf("received data %s\n", pdata);
         return ES_WIFI_STATUS_OK;
       }
       else if(strstr((char *)pdata, AT_ERROR_STRING))
       {
+    	  printf("received data error %s\n", pdata);
         return ES_WIFI_STATUS_ERROR;
-      }      
+      }
+    }
+  }
+  return ES_WIFI_STATUS_IO_ERROR;
+}
+
+ES_WIFI_Status_t execute_command(ES_WIFIObject_t *Obj, uint8_t* cmd, uint8_t *pdata, uint8_t *ssid, uint8_t *pass)
+{
+  if(Obj->fops.IO_Send(cmd, strlen((char*)cmd), Obj->Timeout) > 0)
+	  printf("%s", cmd);
+  {
+    int16_t n=Obj->fops.IO_Receive(pdata, 0, Obj->Timeout);
+    if(n > 0)
+    {
+      *(pdata+n)=0;
+      if(strstr((char *)pdata, AT_OK_STRING))
+      {
+    	  printf("received data %s\n", pdata);
+    	  ssid = strtok(pdata, ",");
+        return ES_WIFI_STATUS_OK;
+      }
+      else if(strstr((char *)pdata, AT_ERROR_STRING))
+      {
+    	  printf("received data error %s\n", pdata);
+        return ES_WIFI_STATUS_ERROR;
+      }
     }
   }
   return ES_WIFI_STATUS_IO_ERROR;
@@ -892,7 +921,7 @@ ES_WIFI_Status_t ES_WIFI_GetNetworkSettings(ES_WIFIObject_t *Obj)
   */
 ES_WIFI_Status_t ES_WIFI_ActivateAP(ES_WIFIObject_t *Obj, ES_WIFI_APConfig_t *ApConfig)
 {
-  ES_WIFI_Status_t ret;
+  ES_WIFI_Status_t ret = ES_WIFI_STATUS_OK;
 
   sprintf((char*)Obj->CmdData,"AS=0,%s\r", ApConfig->SSID);
   ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
@@ -914,14 +943,15 @@ ES_WIFI_Status_t ES_WIFI_ActivateAP(ES_WIFIObject_t *Obj, ES_WIFI_APConfig_t *Ap
           ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
           if(ret == ES_WIFI_STATUS_OK)
           {
-            sprintf((char*)Obj->CmdData,"AD\r");
-            ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);             
+            sprintf((char*)Obj->CmdData,"A0\r");
+            ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+            ret = ES_WIFI_STATUS_OK;
             if(ret == ES_WIFI_STATUS_OK)
             { 
               if(strstr((char *)Obj->CmdData, "[AP     ]"))
               {
                 ret = ES_WIFI_STATUS_OK;
-              }       
+              }
             }            
           }
         }
@@ -992,6 +1022,15 @@ ES_WIFI_APState_t ES_WIFI_WaitAPStateChange(ES_WIFIObject_t *Obj)
   } while (1);
 #endif  
   return ret;
+}
+
+ES_WIFI_Status_t es_wifi_show_settings(ES_WIFIObject_t *Obj, uint8_t *ssid, uint8_t *pass)
+{
+	ES_WIFI_Status_t ret = ES_WIFI_STATUS_OK;
+	printf("hello");
+    sprintf((char*)Obj->CmdData,"A?\r");
+    ret = execute_command(Obj, Obj->CmdData, Obj->CmdData, ssid, pass);
+	return ret;
 }
 
 /**
@@ -1371,7 +1410,7 @@ ES_WIFI_Status_t ES_WIFI_StartServerSingleConn(ES_WIFIObject_t *Obj, ES_WIFI_Con
 {
   ES_WIFI_Status_t ret = ES_WIFI_STATUS_ERROR;
   char *ptr;
-  
+
   sprintf((char*)Obj->CmdData,"PK=1,3000\r");
   ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
   if(ret == ES_WIFI_STATUS_OK)
@@ -1387,7 +1426,7 @@ ES_WIFI_Status_t ES_WIFI_StartServerSingleConn(ES_WIFIObject_t *Obj, ES_WIFI_Con
         sprintf((char*)Obj->CmdData,"P2=%d\r", conn->LocalPort);
         ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
         if(ret == ES_WIFI_STATUS_OK)
-        {       
+        {
           sprintf((char*)Obj->CmdData,"P5=1\r");
           ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData); 
           

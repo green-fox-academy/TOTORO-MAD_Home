@@ -164,6 +164,7 @@ WIFI_Status_t       WIFI_ConfigureAP(
                                         uint8_t max_conn);
 
 WIFI_Status_t       WIFI_HandleAPEvents(WIFI_APSettings_t *setting);
+WIFI_Status_t 		wifi_show_settings(uint8_t *ssid, uint8_t *pass);
 WIFI_Status_t       WIFI_Ping(uint8_t* ipaddr, uint16_t count, uint16_t interval_ms);
 WIFI_Status_t       WIFI_GetHostAddress( char* location, uint8_t* ipaddr);
 WIFI_Status_t       WIFI_OpenClientConnection(uint32_t socket, WIFI_Protocol_t type, const char* name, uint8_t* ipaddr, uint16_t port, uint16_t local_port);
