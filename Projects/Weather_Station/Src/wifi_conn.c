@@ -61,8 +61,8 @@ typedef enum
 
 /* Private define ------------------------------------------------------------*/
 /* WIFI connection data */
-#define SSID_CON     			"HUAWEI-B206"
-#define PASSWORD 				"47213979"
+#define SSID_CON     			"A66 Guest"
+#define PASSWORD 				"Hello123"
 #define MAX_APS					10
 #define AP_CHA					8								//Auto channel
 #define AP_MAX_CONN				0
@@ -96,6 +96,7 @@ uint8_t ap_ssid[] = "STM32L4-IOT";
 uint8_t ap_pass[] = "iot12345";
 //extern ES_WIFIObject_t EsWifiObj;
 WIFI_APSettings_t ap_settings;
+uint8_t ap_ip_addr[4] = {192, 168, 10, 1};
 
 /* TCP client variables */
 uint8_t remote_ip[] = {192, 168, 8, 101};
@@ -225,13 +226,16 @@ void send_sensor_data()
 				wifi_set_timout(1000);
 				if (WIFI_ConfigureAP(ap_ssid, ap_pass, WIFI_ECN_WPA2_PSK, 0, AP_MAX_CONN) == WIFI_STATUS_OK) {
 					printf("Wifi AP has been created, waiting for device to join!\n");
-					while (WIFI_HandleAPEvents(&ap_settings) == WIFI_STATUS_ERROR);
+					//while (WIFI_HandleAPEvents(&ap_settings) == WIFI_STATUS_ERROR);
+					while (WIFI_Ping(ap_ip_addr,1 , 1) == WIFI_STATUS_OK);
 					printf("Joined to network!\n");
+
 					wifi_show_settings(ssid, pass);
+					printf("ssid%s\n", ssid);
 					/*Waiting for connection with WIFI AP */
 					WIFI_Disconnect();
-					printf("> Trying to connect to %s.\n", (char*)ssid);
-					while (WIFI_Connect(ssid, pass, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK) {
+					printf("> Trying to connect to %s.\n", SSID_CON);
+					while (WIFI_Connect(SSID_CON, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK) {
 						/*Start to log after first connection with NTP server */
 						if (get_time_flag == 1) {
 							logging_hq_data();

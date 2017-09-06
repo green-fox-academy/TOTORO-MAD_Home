@@ -1027,7 +1027,6 @@ ES_WIFI_APState_t ES_WIFI_WaitAPStateChange(ES_WIFIObject_t *Obj)
 ES_WIFI_Status_t es_wifi_show_settings(ES_WIFIObject_t *Obj, uint8_t *ssid, uint8_t *pass)
 {
 	ES_WIFI_Status_t ret = ES_WIFI_STATUS_OK;
-	printf("hello");
     sprintf((char*)Obj->CmdData,"A?\r");
     ret = execute_command(Obj, Obj->CmdData, Obj->CmdData, ssid, pass);
 	return ret;
