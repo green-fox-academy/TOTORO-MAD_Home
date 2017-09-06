@@ -11,6 +11,7 @@
 #define VOLT_DIFF_THRESHOLD     1.5
 #define BUFFER_SIZE             50
 #define NUMBER_OF_DATA          268
+#deifne MIN_TEMPERATURE         16
 
 
 int main()
@@ -53,7 +54,7 @@ int main()
     for (int i = 0; i < NUMBER_OF_FILES; i++) {
         data_counter = 0;
         if (i < 15)
-            fprintf(text_files[i], "uint16_t degree_%d[] = {", i + NUMBER_OF_FILES);
+            fprintf(text_files[i], "uint16_t degree_%d[] = {", i + MIN_TEMPERATURE);
         else
             fprintf(text_files[i], "uint16_t onoff[] = {");
 
@@ -72,7 +73,6 @@ int main()
 
                     if (abs(voltage_2 - voltage_1) > VOLT_DIFF_THRESHOLD) {
                         difference = (time_2 - time_1) * MULTIPLIER + EDGE_CORRECTION;
-                        //difference = correction(difference);
 
                         if (high_or_low == 1)
                             fprintf(bin_codes, "%d", filling_binary(difference));
@@ -103,6 +103,7 @@ int main()
         fclose(source_files[i]);
         fclose(text_files[i]);
     }
+    fclose(bin_codes);
 
     return 0;
 }
