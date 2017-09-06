@@ -50,14 +50,12 @@ typedef struct hq_data {
 	rtc_time hq_time;
 }hq_data_t;
 
-/*HTTP connection status typedef */
-typedef enum
-{
-  WS_IDLE = 0,
-  WS_CONNECTED,
-  WS_DISCONNECTED,
-  WS_ERROR,
-} web_server_state_t;
+/*Broadcast listener structure */
+typedef struct broadcast {
+	char spec_msg[20];
+	uint16_t brd_port;
+	uint8_t tcp_ip_addr[20];
+}broadcast_t;
 
 /* Private define ------------------------------------------------------------*/
 /* WIFI connection data */
@@ -67,6 +65,9 @@ typedef enum
 #define AP_CHA					8								//Auto channel
 #define AP_MAX_CONN				0
 #define TIMEOUT					0xFFFFFFFF
+
+/*Broadcast client definitions */
+#define BRD_PORT				12345
 
 /*TCP client definitions */
 #define SERVER_PORT 			8005
@@ -93,6 +94,13 @@ uint8_t ap_ssid[] = "STM32L4-IOT";
 uint8_t ap_pass[] = "iot12345";
 uint8_t pass[20];
 uint8_t ssid[20];
+
+/*Broadcast client variables */
+uint8_t brd_ip_addr[4] = {255, 255, 255, 255};
+uint8_t brd_socket = 2;
+uint8_t pdata[1000];
+uint16_t data_len;
+broadcast_t brd_msg;
 
 /* TCP client variables */
 uint8_t remote_ip[] = {10, 27, 99, 159};
@@ -127,7 +135,28 @@ void send_logged_hq_data();
 void load_buffer();
 
 /* Private functions ---------------------------------------------------------*/
-
+void broadcast_client()
+{
+	WIFI_OpenClientConnection(brd_socket, WIFI_UDP_PROTOCOL, "Broadcast_client", brd_ip_addr, BRD_PORT, 10);
+	do {
+		WIFI_ReceiveData(brd_socket, (uint8_t *)&brd_msg, sizeof(brd_msg), &data_len, 1000);
+		if ((strcmp(brd_msg.spec_msg, "SMARTHOME_HQ")) == 1) {
+	    	uint8_t *token = strtok(brd_msg.tcp_ip_addr, ".");
+	    	ip_addr[0] = atoi(token);
+	    	printf("%d\n", ip_addr[0]);
+	    	uint8_t i = 0;
+	    	while (token != NULL) {
+	    		i++;
+	    		token = strtok(NULL, ".");
+	    		ip_addr[i] = atoi(token);
+	    		printf("%d\n", ip_addr[i]);
+	    		if (i == sizeof(ip_addr) - 1) break;
+	    	}
+	    	break;
+		}
+	} while (1);
+	WIFI_CloseClientConnection(brd_socket);
+}
 void get_time()
 {
 	/* Zero out the packet. All 48 bytes worth*/
@@ -234,6 +263,7 @@ void send_sensor_data()
 								logging_hq_data();
 							}
 						}
+						broadcast_client();
 						/*Getting IP Address */
 						if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
 							printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
@@ -256,7 +286,7 @@ void send_sensor_data()
 										SERVER_PORT);
 								/*Creating socket and connecting to HQ server */
 								socket = 1;
-								while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 10) != WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK);
+								while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT",ip_addr, brd_msg.brd_port, 10) != WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK);
 
 								/*Continues logging while trying to connect to to server */
 								logging_hq_data();
@@ -403,7 +433,6 @@ void load_buffer()
 
 	/*Loading sensor data into buffer */
 	hq_data.sensor_values[0] = 	get_temp();
-	printf("temp :%f\n", get_temp());
 	hq_data.sensor_values[1] = 	get_humidity();
 	hq_data.sensor_values[2] = 	get_pressure();
 }
