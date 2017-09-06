@@ -31,24 +31,12 @@ void i2c_init() {
 	i2c_handle.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
 	i2c_handle.Init.NoStretchMode   = I2C_NOSTRETCH_DISABLE;
 
-	if (HAL_I2C_Init(&i2c_handle) == HAL_OK) {
-	  printf("i2c init ok\n");
-	}
+	HAL_I2C_Init(&i2c_handle);
 
 }
 
 void get_temp() {
 
-//	if (HAL_I2C_IsDeviceReady(&i2c_handle, (uint16_t)I2C_ADDRESS, 10, 10000) != HAL_OK)
-//		printf("device is not rdy\n");
-//	if (HAL_I2C_Master_Receive(&i2c_handle, (uint16_t)I2C_ADDRESS, &temperature, 1, 10000) != HAL_OK)
-//		printf("receive doesn't work\n");
-
-	i2c_handle.Instance->CR2 |= I2C_CR2_START;
-
-//	printf("%d\n", HAL_I2C_Mem_Read(&i2c_handle, (uint16_t)I2C_ADDRESS, 0x00, 1, &temperature, 1, 1000));
-
-	printf("temperature: %d\n", temperature);
+	HAL_I2C_Mem_Read(&i2c_handle, (uint16_t)I2C_ADDRESS, 0x00, I2C_MEMADD_SIZE_8BIT, &temperature, 1, 1000);
 
 }
-
