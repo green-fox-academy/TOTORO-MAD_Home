@@ -51,10 +51,10 @@ typedef struct hq_data {
 }hq_data_t;
 
 /*Broadcast listener structure */
-typedef struct broadcast {
-	char spec_msg[20];
-	uint16_t brd_port;
-	uint8_t tcp_ip_addr[20];
+struct broadcast {
+	char uniq_str[20];
+	uint16_t port;
+	uint8_t ip[20];
 }broadcast_t;
 
 /* Private define ------------------------------------------------------------*/
@@ -100,7 +100,6 @@ uint8_t brd_ip_addr[4] = {255, 255, 255, 255};
 uint8_t brd_socket = 2;
 uint8_t pdata[1000];
 uint16_t data_len;
-broadcast_t brd_msg;
 
 /* TCP client variables */
 uint8_t remote_ip[] = {10, 27, 99, 159};
@@ -139,9 +138,9 @@ void broadcast_client()
 {
 	WIFI_OpenClientConnection(brd_socket, WIFI_UDP_PROTOCOL, "Broadcast_client", brd_ip_addr, BRD_PORT, 10);
 	do {
-		WIFI_ReceiveData(brd_socket, (uint8_t *)&brd_msg, sizeof(brd_msg), &data_len, 1000);
-		if ((strcmp(brd_msg.spec_msg, "SMARTHOME_HQ")) == 1) {
-	    	uint8_t *token = strtok(brd_msg.tcp_ip_addr, ".");
+		WIFI_ReceiveData(brd_socket, (uint8_t *)&broadcast_t, sizeof(broadcast_t), &data_len, 1000);
+		if ((strcmp(broadcast_t.uniq_str, "SMARTHOME_HQ")) == 1) {
+	    	uint8_t *token = strtok(broadcast_t.ip, ".");
 	    	ip_addr[0] = atoi(token);
 	    	printf("%d\n", ip_addr[0]);
 	    	uint8_t i = 0;
@@ -286,7 +285,7 @@ void send_sensor_data()
 										SERVER_PORT);
 								/*Creating socket and connecting to HQ server */
 								socket = 1;
-								while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT",ip_addr, brd_msg.brd_port, 10) != WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK);
+								while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT",ip_addr, broadcast_t.port, 10) != WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK);
 
 								/*Continues logging while trying to connect to to server */
 								logging_hq_data();
