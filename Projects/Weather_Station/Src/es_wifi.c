@@ -538,7 +538,25 @@ ES_WIFI_Status_t execute_command(ES_WIFIObject_t *Obj, uint8_t* cmd, uint8_t *pd
       if(strstr((char *)pdata, AT_OK_STRING))
       {
     	  printf("received data %s\n", pdata);
-    	  ssid = strtok(pdata, ",");
+    	  char *data_token;
+    	  char *token;
+    	  data_token = strtok((char *)pdata, "\n");
+    	  printf("%s\n", data_token);
+
+    	  data_token = strtok(NULL, "\n");
+    	  printf("%s\n", data_token);
+
+    	  token = strtok((char *)data_token, ",");
+    	  uint8_t len = strlen(token);
+    	  printf("%s\n", token);
+
+    	  memcpy(ssid, (uint8_t *)token, len);
+
+    	  token = strtok(NULL, ",");
+    	  len = strlen(token);
+    	  printf("%s\n", token);
+
+    	  memcpy(pass, (uint8_t *)token, len);
         return ES_WIFI_STATUS_OK;
       }
       else if(strstr((char *)pdata, AT_ERROR_STRING))
@@ -1027,7 +1045,7 @@ ES_WIFI_APState_t ES_WIFI_WaitAPStateChange(ES_WIFIObject_t *Obj)
 ES_WIFI_Status_t es_wifi_show_settings(ES_WIFIObject_t *Obj, uint8_t *ssid, uint8_t *pass)
 {
 	ES_WIFI_Status_t ret = ES_WIFI_STATUS_OK;
-    sprintf((char*)Obj->CmdData,"A?\r");
+    sprintf((char*)Obj->CmdData,"C?\r");
     ret = execute_command(Obj, Obj->CmdData, Obj->CmdData, ssid, pass);
 	return ret;
 }

@@ -66,10 +66,7 @@ typedef enum
 #define MAX_APS					10
 #define AP_CHA					8								//Auto channel
 #define AP_MAX_CONN				0
-
-/*HTTP server definitions */
-#define HTTP_SERVER_PORT		8005
-#define WIFI_READ_TIMEOUT		100
+#define TIMEOUT					0xFFFFFFFF
 
 /*TCP client definitions */
 #define SERVER_PORT 			8005
@@ -91,19 +88,16 @@ typedef enum
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
-/*HTTP server variables */
+/*Wifi connection variables */
 uint8_t ap_ssid[] = "STM32L4-IOT";
 uint8_t ap_pass[] = "iot12345";
-//extern ES_WIFIObject_t EsWifiObj;
-WIFI_APSettings_t ap_settings;
-uint8_t ap_ip_addr[4] = {192, 168, 10, 1};
+uint8_t pass[20];
+uint8_t ssid[20];
 
 /* TCP client variables */
-uint8_t remote_ip[] = {192, 168, 8, 101};
+uint8_t remote_ip[] = {10, 27, 99, 159};
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
-uint8_t pass[8];
-uint8_t ssid[20];
 int8_t socket = 1;
 uint16_t datalen;
 uint8_t conn_flag;
@@ -209,6 +203,7 @@ void get_time()
 void send_sensor_data()
 {
     while (1) {
+    	i2c_init();
         /*Initialize  WIFI module */
     	if(WIFI_Init() ==  WIFI_STATUS_OK) {
             printf("> WIFI Module Initialized.\n");
@@ -223,94 +218,93 @@ void send_sensor_data()
 					   mac_addr[4],
 					   mac_addr[5]);
 				printf("Creating Wifi Access Point...\n");
-				wifi_set_timout(1000);
+				wifi_set_timout(TIMEOUT);
 				if (WIFI_ConfigureAP(ap_ssid, ap_pass, WIFI_ECN_WPA2_PSK, 0, AP_MAX_CONN) == WIFI_STATUS_OK) {
-					printf("Wifi AP has been created, waiting for device to join!\n");
-					//while (WIFI_HandleAPEvents(&ap_settings) == WIFI_STATUS_ERROR);
-					while (WIFI_Ping(ap_ip_addr,1 , 1) == WIFI_STATUS_OK);
 					printf("Joined to network!\n");
 
 					wifi_show_settings(ssid, pass);
-					printf("ssid%s\n", ssid);
+
 					/*Waiting for connection with WIFI AP */
 					WIFI_Disconnect();
-					printf("> Trying to connect to %s.\n", SSID_CON);
-					while (WIFI_Connect(SSID_CON, PASSWORD, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK) {
-						/*Start to log after first connection with NTP server */
-						if (get_time_flag == 1) {
-							logging_hq_data();
+					while (1) {
+						printf("> Trying to connect to %s.\n", ssid);
+						while (WIFI_Connect(ssid, pass, WIFI_ECN_WPA2_PSK) != WIFI_STATUS_OK) {
+							/*Start to log after first connection with NTP server */
+							if (get_time_flag == 1) {
+								logging_hq_data();
+							}
 						}
-					}
-					/*Getting IP Address */
-					if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
-						printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
-								ip_addr[0],
-								ip_addr[1],
-								ip_addr[2],
-								ip_addr[3]);
+						/*Getting IP Address */
+						if (WIFI_GetIP_Address(ip_addr) == WIFI_STATUS_OK) {
+							printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
+									ip_addr[0],
+									ip_addr[1],
+									ip_addr[2],
+									ip_addr[3]);
 
-						/*Getting online time for TimeStamp*/
-						get_time();
+							/*Getting online time for TimeStamp*/
+							get_time();
 
-						read_block_cntr = START_BLOCK;
-						/*Checking connection with WIFI AP */
-						do {
-							printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
-									remote_ip[0],
-									remote_ip[1],
-									remote_ip[2],
-									remote_ip[3],
-									SERVER_PORT);
-							/*Creating socket and connecting to HQ server */
-							socket = 1;
-							while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 10) != WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK);
+							read_block_cntr = START_BLOCK;
+							/*Checking connection with WIFI AP */
+							do {
+								printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
+										remote_ip[0],
+										remote_ip[1],
+										remote_ip[2],
+										remote_ip[3],
+										SERVER_PORT);
+								/*Creating socket and connecting to HQ server */
+								socket = 1;
+								while (WIFI_OpenClientConnection(socket, WIFI_TCP_PROTOCOL, "TCP_CLIENT", remote_ip, SERVER_PORT, 10) != WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK);
 
-							/*Continues logging while trying to connect to to server */
-							logging_hq_data();
+								/*Continues logging while trying to connect to to server */
+								logging_hq_data();
 
-							/* Get the RTC current Time */
-							HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
-							/* Get the RTC current Date */
-							HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
-
-							/*Loading data into buffer for first send*/
-							load_buffer();
-
-							conn_flag = 0;
-
-							/*Sending data when connected in every 10 seconds */
-							while (WIFI_SendData(socket, (uint8_t*)&hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK) {
-
-								/*Sending logged data */
-								if (read_block_cntr < write_block_cntr) {
-									send_logged_hq_data();
-								} else {
-									write_block_cntr = START_BLOCK;
-								}
 								/* Get the RTC current Time */
 								HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
 								/* Get the RTC current Date */
 								HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
 
-								/*Loading data into buffer */
+								/*Loading data into buffer for first send*/
 								load_buffer();
 
-								conn_flag = 1;
-
-								HAL_Delay(10000);
-							}
-							/*When connection is lost conn_flag equals 1, else client could'not send data to server, timeout happens*/
-							if (conn_flag == 1) {
-								printf("> Disconnected from server!\n");
-							} else {
 								conn_flag = 0;
-							}
-							/*Closing socket when connection is lost or could'not connect */
-							WIFI_CloseClientConnection(socket);
-						} while (WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK);	//do-while
-						printf("> Disconnected from WIFI!\n");
-					} else {
-						error_handling("> ERROR : es-wifi module CANNOT get IP address\n", WIFI_STATUS_ERROR);
+
+								/*Sending data when connected in every 10 seconds */
+								while (WIFI_SendData(socket, (uint8_t*)&hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK && WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK) {
+
+									/*Sending logged data */
+									if (read_block_cntr < write_block_cntr) {
+										send_logged_hq_data();
+									} else {
+										write_block_cntr = START_BLOCK;
+									}
+									/* Get the RTC current Time */
+									HAL_RTC_GetTime(&RtcHandle, &timestructureget, RTC_FORMAT_BIN);
+									/* Get the RTC current Date */
+									HAL_RTC_GetDate(&RtcHandle, &datestructureget, RTC_FORMAT_BIN);
+
+									/*Loading data into buffer */
+									load_buffer();
+
+									conn_flag = 1;
+
+									HAL_Delay(10000);
+								}
+								/*When connection is lost conn_flag equals 1, else client could'not send data to server, timeout happens*/
+								if (conn_flag == 1) {
+									printf("> Disconnected from server!\n");
+								} else {
+									conn_flag = 0;
+								}
+								/*Closing socket when connection is lost or could'not connect */
+								WIFI_CloseClientConnection(socket);
+							} while (WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK);	//do-while
+							printf("> Disconnected from WIFI!\n");
+						} else {
+							error_handling("> ERROR : es-wifi module CANNOT get IP address\n", WIFI_STATUS_ERROR);
+						}
 					}
 				}  else {
 					error_handling("> ERROR : CANNOT create Wifi AP\n", WIFI_STATUS_ERROR);
@@ -350,7 +344,7 @@ void logging_hq_data()
 
 
 	/*Loading sensor data into buffer*/
-	buffer_tx[8] = get_temperature();
+	buffer_tx[8] = get_temp();
 	buffer_tx[9] = get_humidity();
 	buffer_tx[10] = get_pressure();
 
@@ -408,7 +402,8 @@ void load_buffer()
 	printf("TimeStamp: %s\n",ctime((const time_t*)&time));
 
 	/*Loading sensor data into buffer */
-	hq_data.sensor_values[0] = 	get_temperature();
+	hq_data.sensor_values[0] = 	get_temp();
+	printf("temp :%f\n", get_temp());
 	hq_data.sensor_values[1] = 	get_humidity();
 	hq_data.sensor_values[2] = 	get_pressure();
 }

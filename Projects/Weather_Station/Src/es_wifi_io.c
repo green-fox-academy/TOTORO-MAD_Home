@@ -270,7 +270,6 @@ int16_t SPI_WIFI_ReceiveData(uint8_t *pData, uint16_t len, uint32_t timeout)
   }
   
   WIFI_DISABLE_NSS(); 
-  printf("pdata spi%s\n", pData);
   return length;
 }
 /**

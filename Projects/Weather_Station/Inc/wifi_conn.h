@@ -7,6 +7,7 @@
 #include "stm32l475e_iot01.h"
 #include "stdio.h"
 #include "sensors.h"
+#include "iic.h"
 
 
 /* Defines -------------------------------------------------------------------*/
