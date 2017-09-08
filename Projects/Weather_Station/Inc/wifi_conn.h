@@ -8,6 +8,9 @@
 #include "stdio.h"
 #include "sensors.h"
 #include "iic.h"
+#include "sd_card.h"
+#include <stdlib.h>
+#include <string.h>
 
 
 /* Defines -------------------------------------------------------------------*/

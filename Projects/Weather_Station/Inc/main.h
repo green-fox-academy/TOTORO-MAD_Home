@@ -55,8 +55,13 @@
 #include "wifi.h"
 #include "wifi_conn.h"
 
+/*SDcard includes component*/
 #include <stdio.h>
 #include "sd_card.h"
+
+/*I2C includes component */
+#include "iic.h"
+
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Defines related to Clock configuration */

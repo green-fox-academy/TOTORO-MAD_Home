@@ -43,6 +43,8 @@
 									<listOptionValue builtIn="false" value="../../../../../Drivers/BSP/Components/lis3mdl"/>
 									<listOptionValue builtIn="false" value="../../../../../Drivers/BSP/Components/lsm6dsl"/>
 									<listOptionValue builtIn="false" value="../../../../../Drivers/CMSIS/Include"/>
+									<listOptionValue builtIn="false" value="../../../../../Drivers/BSP/Components/stmpe811"/>
+									<listOptionValue builtIn="false" value="../../../../../Drivers/BSP/Components/stmpe1600"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.2109329500" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32L475xx"/>
@@ -195,9 +197,6 @@
 		<!--scannerConfigBuildInfo instanceId="fr.ac6.managedbuild.config.gnu.cross.exe.release.$(RELEASE_CONFIG_UID);fr.ac6.managedbuild.config.gnu.cross.exe.release.$(RELEASE_CONFIG_UID).;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.$(RELEASE_TOOL_COMPILER_UID);cdt.managedbuild.tool.gnu.c.compiler.input.$(RELEASE_TOOL_COMPILER_INPUT_UID)">
 			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo--><autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="fr.ac6.managedbuild.config.gnu.cross.exe.debug.346288834;fr.ac6.managedbuild.config.gnu.cross.exe.debug.346288834.;fr.ac6.managedbuild.tool.gnu.cross.cpp.compiler.939952338;fr.ac6.managedbuild.tool.gnu.cross.cpp.compiler.input.cpp.197820307">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="fr.ac6.managedbuild.config.gnu.cross.exe.debug.346288834;fr.ac6.managedbuild.config.gnu.cross.exe.debug.346288834.;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.620975842;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.506839055">
 			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>

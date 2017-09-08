@@ -38,6 +38,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+/*EEPROM includes component */
+#include "eeprom.h"
+
 /* Private typedef -----------------------------------------------------------*/
 typedef struct tm {
    int tm_sec;         /* seconds,  range 0 to 59          */
@@ -54,11 +57,6 @@ typedef struct tm {
 /* Private define ------------------------------------------------------------*/
 #define CORR_YEAR	100	//Correcting year for RTC configuration
 #define CORR_MON	1	//Correcting month for RTC configuration
-enum {
-	TRANSFER_WAIT,
-	TRANSFER_COMPLETE,
-	TRANSFER_ERROR
-};
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables --------------------------------------------------------*/
@@ -76,8 +74,9 @@ uint8_t aShowDate[10] = {0}, aShowDateStamp[50] = {0};
 /* SPI handler declaration */
 SPI_HandleTypeDef spihandle;
 
-/* transfer state */
-__IO uint32_t wTransferState = TRANSFER_WAIT;
+/* EEPROM variables */
+EE_Status ee_status;
+uint16_t VirtAddVarTab[];
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -87,6 +86,8 @@ static void RTC_CalendarShow(void);
 void uart_init();
 void rtc_init();
 void spi_init();
+void eeprom_init();
+void init_peripherals();
 #ifdef __GNUC__
 /* With GCC, small printf (option LD Linker->Libraries->Small printf
    set to 'Yes') calls __io_putchar() */
@@ -102,23 +103,17 @@ void spi_init();
   * @param  None
   * @retval None
   */
-int main(void) {
+int main(void)
+{
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
 
 	/* Configure the system clock */
 	SystemClock_Config();
 
-	/* Configure LED2 */
-	BSP_LED_Init(LED2);
+	/*Initializing peripherals */
+	init_peripherals();
 
-	/* Initialize sensors */
-	sensor_inits();
-
-	/* Configure UART */
-	uart_init();
-
-	spi_init();
 	/* Sending sensor data through WIFI connection to HQ device*/
 	send_sensor_data();
 }
@@ -207,6 +202,39 @@ void Error_Handler(void)
   while(1) 
   {
   }
+}
+
+void init_peripherals()
+{
+	/* Configure LED2 */
+	BSP_LED_Init(LED2);
+
+	/*Push button initialization */
+	BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
+
+	/* Initialize sensors */
+	sensor_inits();
+
+	/* Configure UART */
+	uart_init();
+
+	/*Configure SPI for SDcard adapter */
+	spi_init();
+
+	/*External temperature sensor initialization */
+	i2c_init();
+
+	/* EEPROM Initialization */
+	eeprom_init();
+
+}
+void eeprom_init()
+{
+	/* Unlock the Flash Program Erase controller */
+	HAL_FLASH_Unlock();
+
+	ee_status = EE_Init();
+	if( ee_status != EE_OK)  Error_Handler();
 }
 
 void uart_init()
@@ -367,57 +395,6 @@ void spi_init()
 	  printf("sdcard ret %d\n",sdcard_init());
 	  printf("size of sdcard %d\n", get_size());
 }
-
-/**
-  * @brief  TxRx Transfer completed callback.
-  * @param  hspi: SPI handle
-  * @note   This example shows a simple way to report end of Interrupt TxRx transfer, and
-  *         you can add your own implementation.
-  * @retval None
-  */
-void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
-{
-  /* Turn LED on: Transfer in transmission process is correct */
-  BSP_LED_On(LED2);
-  /* Turn LED on: Transfer in reception process is correct */
-  BSP_LED_On(LED2);
-  wTransferState = TRANSFER_COMPLETE;
-}
-
-/**
-  * @brief  SPI error callbacks.
-  * @param  hspi: SPI handle
-  * @note   This example shows a simple way to report transfer error, and you can
-  *         add your own implementation.
-  * @retval None
-  */
-void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
-{
-  wTransferState = TRANSFER_ERROR;
-}
-
-/**
-  * @brief  Compares two buffers.
-  * @param  pBuffer1, pBuffer2: buffers to be compared.
-  * @param  BufferLength: buffer's length
-  * @retval 0  : pBuffer1 identical to pBuffer2
-  *         >0 : pBuffer1 differs from pBuffer2
-  */
-static uint16_t Buffercmp(uint8_t *pBuffer1, uint8_t *pBuffer2, uint16_t BufferLength)
-{
-  while (BufferLength--)
-  {
-    if ((*pBuffer1) != *pBuffer2)
-    {
-      return BufferLength;
-    }
-    pBuffer1++;
-    pBuffer2++;
-  }
-
-  return 0;
-}
-
 #ifdef  USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
