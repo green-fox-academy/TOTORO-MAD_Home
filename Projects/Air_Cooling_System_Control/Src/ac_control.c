@@ -10,6 +10,11 @@
 /* Private variables --------------------------------------------------------*/
 /* Command arrays */
 
+uint8_t start_array[] = {0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0,
+						 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0};
+
 const uint16_t degree_16[] = {4709, 2620, 326, 408, 367, 982, 326, 1023, 326, 408, 367, 982, 326, 408, 326, 449,
 		 326, 408, 326, 408, 367, 982, 326, 408, 367, 408, 326, 1023, 326, 408, 326, 408,
 		 367, 408, 326, 408, 367, 408, 326, 408, 367, 408, 326, 982, 367, 408, 326, 408,
@@ -267,6 +272,21 @@ extern TIM_OC_InitTypeDef pwm_conf;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
+void spec_signal(uint16_t delay1, uint16_t delay2) {
+	HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
+	delay(delay1);
+	HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
+	delay(delay2);
+}
+
+void fill_signal_array(uint8_t *array, uint8_t *cmd) {
+	for (int i = 0; i < 48; i++) {
+		array[i] = start_array[i];
+	}
+
+
+}
+
 void send_signal(const uint16_t *array)
 {
 	for (int i = 0; i < COMMAND_SIZE; i = i + 2) {
@@ -281,54 +301,34 @@ void send_signal(const uint16_t *array)
 
 void make_signal(const uint8_t *array)
 {
-	uint8_t counter = 1;
+	uint8_t counter = 0;
 	for (int i = 0; i < (COMMAND_SIZE / 2); i++) {
 		if (array[i] == 0) {
-			HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
-			delay(360);
-			HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
-			delay(410);
+			spec_signal(360, 410);
 		} else if (array[i] == 1) {
-			HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
-			delay(360);
-			HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
-			delay(980);
+			spec_signal(360, 980);
 		} else if (array[i] == 2) {
-			switch (itoa(counter)) {
-			case '1':
-				HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
-				delay(4700);
-				HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
-				delay(2580);
+			counter++;
+			switch (counter) {
+			case 1:
+				spec_signal(4700, 2580);
 				break;
-			case '2':
-				HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
-				delay(360);
-				HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
-				delay(20150);
+			case 2:
+				spec_signal(360, 20150);
 				break;
-			case '3':
-				HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
-				delay(4700);
-				HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
-				delay(9300);
+			case 3:
+				spec_signal(4700, 9300);
 				break;
-			case '4':
-				HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
-				delay(360);
-				HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
-				delay(20150);
+			case 4:
+				spec_signal(360, 20150);
 				break;
-			case '5':
-				HAL_TIM_PWM_Start(&tim_pwm_handle, TIM_CHANNEL_1);
-				delay(4700);
-				HAL_TIM_PWM_Stop(&tim_pwm_handle, TIM_CHANNEL_1);
+			case 5:
+				spec_signal(4700, 2580);
 				break;
 			default:
 				break;
 			} //switch
 		} //else
-		counter++;
 	} //for
 } //function
 

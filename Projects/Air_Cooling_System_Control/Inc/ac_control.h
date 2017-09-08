@@ -12,6 +12,8 @@
 void send_signal(const uint16_t *array);
 void make_signal(const uint8_t *array);
 void set_ac(uint8_t command);
+void fill_signal_array(uint8_t *array, uint8_t *cmd);
+void spec_signal(uint16_t delay1, uint16_t delay2);
 
 #endif /* __PS_CONTROL_H */
 

@@ -53,6 +53,7 @@ uint8_t rx_data[5];
 uint8_t mac_addr[6];
 uint8_t ip_addr[4];
 uint8_t connection_counter = 0;
+uint8_t signal_array[64];
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -134,14 +135,16 @@ int main(void) {
 			/*trying to connect to server and sending data when connected in every 10 seconds */
 			do {
 				if(datalen > 0) {
-					if (rx_data[4] == 1) {
-						printf("comm: %d\n", rx_data[4]);
-						set_ac(31);
-					} else {
-						comm = rx_data[1] * 10 + rx_data[0];
-						printf("comm: %d\n", comm);
-						set_ac(comm);
-					}
+//					if (rx_data[4] == 1) {
+//						printf("comm: %d\n", rx_data[4]);
+//						set_ac(31);
+//					} else {
+//						comm = rx_data[1] * 10 + rx_data[0];
+//						printf("comm: %d\n", comm);
+//						set_ac(comm);
+//					}
+					fill_signal_array(signal_array, rx_data);
+					make_signal(signal_array);
 					datalen = 0;
 				}
 			} while (WIFI_ReceiveData(socket, rx_data, sizeof(rx_data), &datalen, 0) == WIFI_STATUS_OK);
