@@ -1,4 +1,9 @@
 
+Drivers/
+Middlewares/
+Utilities/
+
+
 # Created by https://www.gitignore.io/api/c,eclipse,atmelstudio
 
 ### AtmelStudio ###
@@ -93,3 +98,4 @@ bin/
 obj/
 
 # End of https://www.gitignore.io/api/codebloc
+
