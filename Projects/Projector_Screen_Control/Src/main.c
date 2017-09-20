@@ -74,12 +74,8 @@ int main(void) {
 
 	i2c_init();
 
-	while (1) {
-		get_temp();
-		HAL_Delay(2000);
-	}
+	send_ps_command();
 
-//	send_ps_command();
 
 }//main
 
