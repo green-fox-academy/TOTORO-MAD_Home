@@ -11,7 +11,7 @@
 #include "sd_card.h"
 #include <stdlib.h>
 #include <string.h>
-
+#include "time.h"
 
 /* Defines -------------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/

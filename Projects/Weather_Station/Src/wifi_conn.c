@@ -32,7 +32,7 @@ typedef struct
 }ntp_packet;                         // Total: 384 bits or 48 chars.
 
 /*Time structure */
-typedef struct tm {
+typedef struct time {
    int tm_sec;         /* seconds,  range 0 to 59          */
    int tm_min;         /* minutes, range 0 to 59           */
    int tm_hour;        /* hours, range 0 to 23             */
@@ -284,7 +284,7 @@ void broadcast_client()
 	    	while (token != NULL) {
 	    		i++;
 	    		token = (uint8_t *)strtok(NULL, (const char *)".");
-	    		tcp_ip_addr[i] = (uint8_t)atoi(token);
+	    		tcp_ip_addr[i] = (uint8_t)atoi((const char *)token);
 	    		printf("%d\n", tcp_ip_addr[i]);
 	    		if (i == sizeof(tcp_ip_addr) - 1) break;
 	    	}
@@ -338,7 +338,7 @@ void get_time()
 						   time_t txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA + UTC_PLUS_2);
 
 						   /* Load time data to structure for RTC initialization */
-						   rtc_data = gmtime((const time_t*)&txTm);
+						   rtc_data = (rtc_time *)gmtime((const time_t *)&txTm);
 
 						   /* RTC initialization */
 						   rtc_init();
@@ -397,8 +397,8 @@ void logging_hq_data()
 	buffer_tx[9]  = get_humidity();
 	buffer_tx[10] = get_pressure();
 
-	write_block(write_block_cntr, &buffer_tx);
-	printf("writing block %x\n", write_block_cntr);
+	write_block(write_block_cntr, (uint8_t *)&buffer_tx);
+	printf("writing block %d\n", (int)write_block_cntr);
 	write_block_cntr++;
 }
 
@@ -408,7 +408,7 @@ void send_logged_hq_data()
 	uint32_t read_10_blocks = read_block_cntr + BLOCKS_TO_SEND;
 	while (WIFI_SendData(socket, (uint8_t*)&hq_data, sizeof(hq_data), &datalen, WIFI_WRITE_TIMEOUT) == WIFI_STATUS_OK
 			&& WIFI_Ping(ip_addr,0 ,0) == WIFI_STATUS_OK && read_block_cntr < read_10_blocks && read_block_cntr < write_block_cntr) {
-		read_block(read_block_cntr, &buffer_rx);
+		read_block(read_block_cntr, (uint8_t *)&buffer_rx);
 
 		/*Loading time data into buffer */
 		hq_data.hq_time.tm_hour  = 	buffer_rx[0];
@@ -420,7 +420,7 @@ void send_logged_hq_data()
 		hq_data.hq_time.tm_mday  = 	buffer_rx[6];
 		hq_data.hq_time.tm_wday	 = 	buffer_rx[7];
 
-		time_t time = mktime(&(hq_data.hq_time));
+		time_t time = mktime((struct tm *)&(hq_data.hq_time));
 		printf("TimeStamp logged: %s\n",ctime((const time_t*)&time));
 
 		/*Loading sensor data into buffer */
@@ -428,7 +428,7 @@ void send_logged_hq_data()
 		hq_data.sensor_values[1] =	buffer_rx[9];
 		hq_data.sensor_values[2] = 	buffer_rx[10];
 
-		printf("reading block :%x\n", read_block_cntr);
+		printf("reading block :%d\n", (int)read_block_cntr);
 		read_block_cntr++;
 
 		HAL_Delay(1000);
@@ -447,7 +447,7 @@ void load_buffer()
 	hq_data.hq_time.tm_mday  = 	datestructureget.Date;
 	hq_data.hq_time.tm_wday  = 	datestructureget.WeekDay + WEEKDAY_CORR;
 
-	time_t time = mktime(&(hq_data.hq_time));
+	time_t time = mktime((struct tm *)&(hq_data.hq_time));
 	printf("TimeStamp: %s\n",ctime((const time_t*)&time));
 
 	/*Loading sensor data into buffer */

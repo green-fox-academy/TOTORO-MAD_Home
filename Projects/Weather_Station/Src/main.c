@@ -42,7 +42,7 @@
 #include "eeprom.h"
 
 /* Private typedef -----------------------------------------------------------*/
-typedef struct tm {
+typedef struct time {
    int tm_sec;         /* seconds,  range 0 to 59          */
    int tm_min;         /* minutes, range 0 to 59           */
    int tm_hour;        /* hours, range 0 to 23             */
@@ -76,7 +76,7 @@ SPI_HandleTypeDef spihandle;
 
 /* EEPROM variables */
 EE_Status ee_status;
-uint16_t VirtAddVarTab[];
+uint16_t VirtAddVarTab[] = {0};
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -393,7 +393,7 @@ void spi_init()
 	  spihandle.Init.Mode 			   = SPI_MODE_MASTER;
 
 	  printf("sdcard ret %d\n",sdcard_init());
-	  printf("size of sdcard %d\n", get_size());
+	  printf("size of sdcard %d\n", (int)get_size());
 }
 #ifdef  USE_FULL_ASSERT
 /**

@@ -222,8 +222,7 @@ HAL_StatusTypeDef lspi_wait_flag_state_until_timeout(SPI_HandleTypeDef *hspi, ui
 uint8_t card_a_cmd(uint8_t cmd, uint32_t arg);
 uint8_t read_register(uint8_t cmd, void* buf);
 uint8_t readCSD(union csd_t* csd);
-uint8_t write_block(uint32_t blockaddr, uint8_t* buffer);
-uint8_t read_block(uint32_t blockaddr, uint8_t* buffer);
+
 /* Private functions ---------------------------------------------------------*/
 
 uint8_t sdcard_init(){
